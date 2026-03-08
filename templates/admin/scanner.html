@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Scanner{% endblock %}
+{% block page_title %}📲 Scanner{% endblock %}
+
+{% block content %}
+<div style="max-width:680px">
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">🔍 QR / ID Scanner</div>
+        </div>
+        <div class="card-body">
+
+            <!-- Mode Selector -->
+            <div class="scan-mode-tabs" id="mode-tabs">
+                <div class="scan-mode-tab active-entry" data-mode="entry" onclick="setMode('entry')">
+                    ✅ Entry
+                </div>
+                <div class="scan-mode-tab" data-mode="exit" onclick="setMode('exit')">
+                    🚪 Exit
+                </div>
+                <div class="scan-mode-tab" data-mode="food" onclick="setMode('food')">
+                    🍽️ Food
+                </div>
+            </div>
+
+            <div
+                style="margin-bottom:14px;padding:10px 14px;border-radius:8px;background:rgba(0,245,255,0.05);border:1px solid rgba(0,245,255,0.12);font-size:0.82rem;color:var(--text-secondary)">
+                <span id="mode-desc">Scan or type a Participant ID to mark <strong>Entry</strong>.</span>
+            </div>
+
+            <form id="scanner-form">
+                <input type="hidden" id="mode-input" value="entry" />
+                <div class="scanner-input-wrap">
+                    <span class="scan-icon">📲</span>
+                    <input type="text" id="scan-uid" class="form-control scanner-input" placeholder="HF-0001"
+                        autocomplete="off" autocapitalize="characters" style="flex:1" />
+                    <button type="submit" class="btn btn-primary">
+                        Scan →
+                    </button>
+                </div>
+            </form>
+
+            <div class="scanner-result" id="scan-result"></div>
+
+        </div>
+    </div>
+
+    <!-- History (mini) -->
+    <div class="card" style="margin-top:20px">
+        <div class="card-header">
+            <div class="card-title">🕐 Recent Scans</div>
+            <span id="recent-count" class="badge badge-entry">0</span>
+        </div>
+        <div class="card-body" id="recent-scans" style="padding:0 22px 12px">
+            <p style="color:var(--text-muted);font-size:0.85rem;padding:12px 0">No scans yet this session.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const MODES = {
+        entry: { label: 'Entry', desc: 'Scan or type a Participant ID to mark <strong>Entry</strong>.', color: 'active-entry' },
+        exit: { label: 'Exit', desc: 'Scan or type a Participant ID to mark <strong>Exit</strong>.', color: 'active-exit' },
+        food: { label: 'Food', desc: 'Scan or type a Participant ID to issue a <strong>Food token</strong>.', color: 'active-food' },
+    };
+    let currentMode = 'entry';
+    const scans = [];
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('mode-input').value = mode;
+        document.getElementById('mode-desc').innerHTML = MODES[mode].desc;
+        document.querySelectorAll('.scan-mode-tab').forEach(tab => {
+            tab.className = 'scan-mode-tab';
+            if (tab.dataset.mode === mode) tab.classList.add(MODES[mode].color);
+        });
+        document.getElementById('scan-uid').focus();
+    }
+
+    initScanner({
+        formId: 'scanner-form',
+        uidInputId: 'scan-uid',
+        modeInputId: 'mode-input',
+        resultId: 'scan-result',
+        processUrl: "{{ url_for('admin.process_scan') }}",
+    });
+
+    // Override form submit to also add to recent scans
+    const form = document.getElementById('scanner-form');
+    form.addEventListener('submit', () => {
+        const uid = document.getElementById('scan-uid').value.trim().toUpperCase();
+        const mode = currentMode;
+        setTimeout(() => {
+            const resultEl = document.getElementById('scan-result');
+            if (resultEl.classList.contains('success')) {
+                scans.unshift({ uid, mode, time: new Date().toLocaleTimeString() });
+                renderRecent();
+            }
+        }, 400);
+    });
+
+    function renderRecent() {
+        document.getElementById('recent-count').textContent = scans.length;
+        if (scans.length === 0) return;
+        let html = scans.slice(0, 10).map(s => `
+    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+      <span style="font-family:monospace;font-size:0.82rem;color:var(--neon-cyan)">${s.uid}</span>
+      <span class="badge badge-${s.mode}">${MODES[s.mode].label}</span>
+      <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted)">${s.time}</span>
+    </div>`).join('');
+        document.getElementById('recent-scans').innerHTML = `<div style="margin-top:4px">${html}</div>`;
+    }
+</script>
+{% endblock %}

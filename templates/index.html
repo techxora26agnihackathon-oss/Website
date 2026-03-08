@@ -1,0 +1,3790 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TECHXORA 26 – Hackathon Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Chakra+Petch:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --pri: #a78bfa;
+            --pri-glow: rgba(167, 139, 250, 0.55);
+            --sec: #f59e0b;
+            --sec-glow: rgba(245, 158, 11, 0.55);
+            --dim: rgba(220, 210, 255, 0.38);
+            --bg: #07050f;
+            --bg-card: rgba(10, 8, 22, 0.85);
+            --border: rgba(167, 139, 250, 0.12);
+            --border-b: rgba(167, 139, 250, 0.35);
+            --text: #ede9fe;
+            --muted: rgba(220, 210, 255, 0.38);
+            --yellow: #f59e0b;
+            --error: #f87171;
+            --cyan: #a78bfa;
+            --cyan-glow: rgba(167, 139, 250, 0.55);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Chakra Petch', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            cursor: none;
+        }
+
+        /* ── Custom Cursor ──────────────────────────────── */
+        #cur {
+            width: 10px;
+            height: 10px;
+            background: var(--pri);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 2147483647;
+            /* MAX Z-INDEX */
+            box-shadow: 0 0 14px var(--pri), 0 0 36px var(--pri-glow);
+            mix-blend-mode: screen;
+        }
+
+        #cur-ring {
+            width: 34px;
+            height: 34px;
+            border: 1px solid rgba(167, 139, 250, 0.5);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 2147483646;
+            /* MAX Z-INDEX - 1 */
+            transition: all .11s ease;
+        }
+
+        /* ── Background Canvas ──────────────────────────── */
+        #bgCanvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+        }
+
+        .scanlines {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: repeating-linear-gradient(to bottom, transparent 0px, transparent 3px, rgba(167, 139, 250, 0.012) 3px, rgba(167, 139, 250, 0.012) 4px);
+        }
+
+        .vignette {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            background: radial-gradient(ellipse at 50% 40%, transparent 30%, rgba(7, 5, 15, 0.88) 100%);
+        }
+
+        /* ── Navbar ──────────────────────────────────────── */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 52px;
+            border-bottom: 1px solid rgba(167, 139, 250, 0.1);
+            backdrop-filter: blur(22px);
+            background: rgba(7, 5, 15, 0.4);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .logo-badge {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid var(--pri);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Mono', monospace;
+            font-size: 9px;
+            color: var(--pri);
+            box-shadow: 0 0 16px var(--pri-glow);
+            animation: logoPulse 3s ease-in-out infinite;
+            overflow: hidden;
+        }
+
+        .logo-badge img {
+            width: 110%;
+            height: 110%;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+
+        @keyframes logoPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 16px var(--pri-glow);
+            }
+
+            50% {
+                box-shadow: 0 0 30px var(--pri), 0 0 60px var(--pri-glow);
+            }
+        }
+
+        .nav-logo .yr {
+            color: var(--sec);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 34px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--dim);
+            text-decoration: none;
+            text-transform: uppercase;
+            transition: color .3s, text-shadow .3s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--pri);
+            text-shadow: 0 0 12px var(--pri-glow);
+        }
+
+        .portal-btn {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            padding: 10px 24px;
+            background: transparent;
+            border: 1px solid var(--pri);
+            color: var(--pri);
+            cursor: none;
+            text-transform: uppercase;
+            clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+            transition: all .3s;
+        }
+
+        .portal-btn:hover {
+            background: var(--pri);
+            color: #07050f;
+            box-shadow: 0 0 28px var(--pri-glow);
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 10px;
+            z-index: 1100;
+            margin-left: auto;
+            position: relative;
+        }
+
+        .hamburger span {
+            display: block;
+            width: 28px;
+            height: 2px;
+            background: var(--cyan);
+            transition: all 0.3s ease;
+            transform-origin: center;
+        }
+
+        /* Hamburger Animation */
+        .hamburger.open span:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+        }
+
+        .hamburger.open span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.open span:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg);
+        }
+
+        /* ── Side Card Login ─────────────────────────────── */
+        .side-login {
+            position: fixed;
+            right: -280px;
+            top: 80px;
+            width: 260px;
+            background: rgba(10, 17, 16, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-right: none;
+            border-radius: 12px 0 0 12px;
+            padding: 24px;
+            z-index: 90;
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: -10px 0 30px rgba(0, 255, 204, 0.05);
+        }
+
+        .side-login.open {
+            right: 0;
+        }
+
+        .side-login h3 {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.8rem;
+            color: var(--cyan);
+            letter-spacing: 2px;
+            margin-bottom: 6px;
+        }
+
+        .side-login p {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+        }
+
+        .login-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: rgba(0, 255, 204, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--cyan);
+            text-align: center;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+
+        .login-btn:hover {
+            background: var(--cyan-glow);
+            border-color: var(--cyan);
+            box-shadow: 0 0 16px var(--cyan-glow);
+        }
+
+        .toggle-login-btn {
+            position: fixed;
+            right: 0;
+            top: 120px;
+            z-index: 95;
+            background: var(--cyan);
+            color: #000;
+            font-weight: 700;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            padding: 16px 8px;
+            border-radius: 8px 0 0 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            box-shadow: -4px 0 16px rgba(0, 255, 204, 0.3);
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toggle-login-btn.open {
+            right: 260px;
+        }
+
+        /* ── Main Layout ─────────────────────────────────── */
+        main {
+            position: relative;
+            z-index: 1;
+            padding-top: 70px;
+        }
+
+        section {
+            padding: 80px 5%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* ── Hero ────────────────────────────────────────── */
+        #home {
+            min-height: calc(100vh - 70px);
+            justify-content: center;
+            text-align: center;
+        }
+
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border: 1px solid var(--border-b);
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: rgba(0, 245, 255, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .college-header {
+            margin-bottom: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+        }
+
+        .college-logo {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.3rem;
+            overflow: hidden;
+        }
+
+        .college-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 0;
+        }
+
+        .college-name {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(1.4rem, 4vw, 2.8rem);
+            color: var(--text);
+            letter-spacing: 3px;
+            font-weight: 900;
+        }
+
+        .dept-name {
+            font-family: 'Space Mono', monospace;
+            font-size: clamp(0.6rem, 1.2vw, 0.9rem);
+            color: var(--pri);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .presents-text {
+            font-family: 'Chakra Petch', sans-serif;
+            font-size: 1.1rem;
+            color: var(--dim);
+            font-style: italic;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #f87171;
+            box-shadow: 0 0 8px #f87171;
+            animation: dotBlink 1s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes dotBlink {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.3;
+                transform: scale(1.5);
+            }
+        }
+
+        .hero-title {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: clamp(4rem, 12vw, 9rem);
+            line-height: 0.8;
+            margin-bottom: 14px;
+            display: inline-block;
+            position: relative;
+            background: linear-gradient(135deg, #c4b5fd 0%, #a78bfa 40%, #818cf8 70%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 30px rgba(167, 139, 250, 0.6));
+            animation: titleFlicker 10s ease-in-out infinite;
+        }
+
+        @keyframes titleFlicker {
+
+            0%,
+            88%,
+            90%,
+            94%,
+            96%,
+            100% {
+                opacity: 1;
+            }
+
+            89% {
+                opacity: 0.55;
+            }
+
+            95% {
+                opacity: 0.75;
+            }
+        }
+
+        .hero-title .sup {
+            font-size: 0.4em;
+            color: var(--sec);
+            -webkit-text-fill-color: var(--sec);
+            position: absolute;
+            top: 0;
+            right: -1.7em;
+            filter: drop-shadow(0 0 20px var(--sec-glow));
+        }
+
+        .hero-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-bottom: 48px;
+            letter-spacing: 1px;
+        }
+
+        .stats-container {
+            display: flex;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            max-width: 800px;
+            width: 100%;
+            margin-bottom: 40px;
+            background: rgba(5, 10, 10, 0.6);
+            backdrop-filter: blur(4px);
+        }
+
+        .stat-box {
+            flex: 1;
+            padding: 24px 10px;
+            text-align: center;
+            border-right: 1px solid var(--border);
+        }
+
+        .stat-box:last-child {
+            border-right: none;
+        }
+
+        .stat-val {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 2.8rem;
+            color: var(--cyan);
+            line-height: 1;
+            text-shadow: 0 0 16px rgba(0, 255, 204, 0.3);
+        }
+
+        .stat-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 8px;
+        }
+
+        /* ── Countdown Timer ────────────────────────────── */
+        .timer-container {
+            margin: 40px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .timer-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.75rem;
+            color: var(--cyan);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .timer-display {
+            display: flex;
+            gap: 20px;
+        }
+
+        .timer-segment {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 80px;
+        }
+
+        .timer-val {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 3.5rem;
+            color: var(--text);
+            line-height: 1;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .timer-lbl {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        .timer-sep {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 3rem;
+            color: var(--cyan);
+            opacity: 0.3;
+            padding-top: 4px;
+        }
+
+        /* ── About Department ────────────────────────────── */
+        #about-dept {
+            background: linear-gradient(to bottom, transparent, rgba(0, 245, 255, 0.03));
+            border-top: 1px solid var(--border);
+            padding: 100px 5%;
+        }
+
+        .dept-content {
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .dept-text h2 {
+            font-family: 'Chakra Petch', sans-serif;
+            font-size: 3.5rem;
+            color: var(--cyan);
+            letter-spacing: 2px;
+            margin-bottom: 24px;
+        }
+
+        .dept-text p {
+            color: var(--text);
+            line-height: 1.8;
+            margin-bottom: 20px;
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .dept-features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .dept-feat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 24px;
+            border-radius: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .dept-feat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--cyan);
+        }
+
+        .dept-feat-icon {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .dept-feat-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.2rem;
+            color: var(--cyan);
+            letter-spacing: 1px;
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .btn-solid {
+            background: var(--cyan);
+            color: #000;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
+            transition: transform 0.2s;
+        }
+
+        .btn-solid:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.6);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--cyan);
+            padding: 14px 28px;
+            border: 1px solid var(--border-b);
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-outline:hover {
+            background: var(--cyan-glow);
+            box-shadow: 0 0 20px var(--cyan-glow);
+        }
+
+        /* ── Timeline ────────────────────────────────────── */
+        #timeline {
+            background: rgba(5, 10, 10, 0.4);
+            border-top: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-family: 'Chakra Petch', sans-serif;
+            font-size: 3.5rem;
+            color: var(--cyan);
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        .section-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-bottom: 48px;
+            text-align: center;
+        }
+
+        .tl-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .tl-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            position: relative;
+        }
+
+        .tl-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--cyan);
+            border-radius: 4px 0 0 4px;
+            opacity: 0.5;
+        }
+
+        .tl-date {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--cyan);
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .tl-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        /* ── Details ─────────────────────────────────────── */
+        #details {
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            width: 100%;
+        }
+
+        .detail-card {
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            padding: 32px 24px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .detail-icon {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .detail-val {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 2rem;
+            color: var(--cyan);
+            margin-bottom: 4px;
+        }
+
+        .detail-lbl {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* ── Registration Form ────────────────────────────── */
+        #register {
+            background: rgba(5, 10, 10, 0.8);
+            border-top: 1px solid var(--border);
+        }
+
+        .reg-wrapper {
+            width: 100%;
+            max-width: 680px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: rgba(10, 17, 16, 0.7);
+            padding: 40px;
+            box-shadow: 0 0 40px rgba(0, 255, 204, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .reg-wrapper::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--cyan-glow) 0%, transparent 60%);
+            opacity: 0.1;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .reg-form-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 2.5rem;
+            color: var(--cyan);
+            letter-spacing: 2px;
+            line-height: 1;
+            margin-bottom: 4px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .reg-form-sub {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-bottom: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--cyan);
+        }
+
+        label span {
+            color: var(--error);
+        }
+
+        .form-control {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 14px 16px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.9rem;
+            color: var(--text);
+            outline: none;
+            transition: border-color .2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 2px var(--cyan-glow);
+        }
+
+        .form-control::placeholder {
+            color: var(--muted);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 18px;
+            border-radius: 6px;
+            border: none;
+            background: var(--cyan);
+            color: #000;
+            font-weight: 800;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all .2s;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+        }
+
+        .btn-submit:hover {
+            box-shadow: 0 0 32px rgba(0, 255, 204, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* ── Flash & Success ─────────────────────────────── */
+        .flash {
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+
+        .flash.success {
+            background: var(--cyan-glow);
+            color: var(--cyan);
+            border: 1px solid var(--cyan);
+        }
+
+        .flash.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        .success-box {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .success-id {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 3rem;
+            color: var(--cyan);
+            letter-spacing: 4px;
+            margin: 16px 0;
+        }
+
+        .qr-img {
+            background: #fff;
+            padding: 16px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-bottom: 24px;
+        }
+
+        .qr-img img {
+            display: block;
+            width: 200px;
+            height: 200px;
+        }
+
+
+        /* ── Problem Modal ─────────────────────────────── */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: var(--dark-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            padding: 40px;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            box-shadow: 0 0 40px rgba(0, 245, 255, 0.1);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--cyan);
+        }
+
+        .modal-title {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 2.5rem;
+            color: var(--cyan);
+            margin-bottom: 24px;
+            letter-spacing: 1px;
+            line-height: 1.1;
+        }
+
+        .problem-entry {
+            margin-bottom: 24px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid var(--cyan);
+        }
+
+        .problem-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .problem-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text);
+        }
+
+        .modal-domain {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .problem-description {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text);
+            opacity: 0.9;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           RESPONSIVE – Mobile & Tablet
+           ═══════════════════════════════════════════════════════ */
+
+        /* ── Tablet (≤ 992px) ─────────────────────────────── */
+        @media (max-width: 992px) {
+            .nav-links {
+                display: none;
+                position: fixed;
+                top: 70px;
+                left: 0;
+                right: 0;
+                background: rgba(5, 12, 11, 0.99);
+                backdrop-filter: blur(25px);
+                flex-direction: column;
+                align-items: center;
+                gap: 0;
+                padding: 30px 0;
+                border-bottom: 1px solid var(--border);
+                z-index: 9999;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+            }
+
+            .nav-links.open {
+                display: flex;
+            }
+
+            .nav-links li {
+                width: 100%;
+                text-align: center;
+            }
+
+            .nav-links a {
+                display: block;
+                width: 100%;
+                padding: 18px 0;
+                color: var(--text) !important;
+                font-size: 1.1rem;
+                letter-spacing: 2px;
+                text-align: center;
+                border-bottom: 1px solid rgba(0, 245, 255, 0.05);
+                top: 0 !important;
+                position: relative;
+            }
+
+            .nav-links a:hover,
+            .nav-links a.active {
+                color: var(--cyan) !important;
+                background: rgba(0, 245, 255, 0.05);
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .hero-title {
+                font-size: clamp(4rem, 16vw, 10rem);
+            }
+
+            .college-name {
+                font-size: clamp(2rem, 6vw, 3.5rem);
+            }
+
+            .dept-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .stats-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stat-box:nth-child(2) {
+                border-right: none;
+            }
+
+            .stat-box:nth-child(1),
+            .stat-box:nth-child(2) {
+                border-bottom: 1px solid var(--border);
+            }
+        }
+
+        /* ── Mobile (≤ 640px) ─────────────────────────────── */
+        @media (max-width: 640px) {
+            .nav-logo {
+                font-size: 1.4rem;
+            }
+
+            .nav-logo img {
+                width: 32px;
+                height: 32px;
+            }
+
+            .hero-title {
+                font-size: clamp(3.5rem, 18vw, 6rem);
+            }
+
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-box {
+                border-right: none !important;
+                border-bottom: 1px solid var(--border) !important;
+            }
+
+            .stat-box:last-child {
+                border-bottom: none !important;
+            }
+
+            .timer-display {
+                gap: 8px;
+            }
+
+            .timer-val {
+                font-size: 2rem;
+            }
+
+            .timer-segment {
+                min-width: 45px;
+            }
+
+            .dept-text h2 {
+                font-size: 2.2rem;
+            }
+
+            .dept-features {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .hero-btns {
+                flex-direction: column;
+                width: 100%;
+                align-items: center;
+            }
+
+            .btn-solid {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        /* ── Small Mobile (≤ 400px) ───────────────────────── */
+        @media (max-width: 400px) {
+            .college-name {
+                font-size: 1.5rem;
+            }
+
+            .hero-title {
+                font-size: 3rem;
+            }
+
+            .timer-val {
+                font-size: 1.6rem;
+            }
+        }
+
+        /* ================================================================
+           FULL-SITE RESPONSIVE RULES - All Sections
+           ================================================================ */
+
+        /* Large Tablet / Small Laptop - max 1024px */
+        @media (max-width: 1024px) {
+            nav {
+                padding: 14px 24px;
+            }
+
+            section {
+                padding: 60px 4%;
+            }
+
+            .section-title {
+                font-size: clamp(2rem, 5vw, 3.5rem);
+            }
+
+            .domains-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+        }
+
+        /* Tablet - max 768px */
+        @media (max-width: 768px) {
+            nav {
+                padding: 12px 16px;
+            }
+
+            .logo-badge {
+                width: 46px;
+                height: 46px;
+            }
+
+            section {
+                padding: 50px 5%;
+            }
+
+            /* Hero */
+            .college-logo {
+                width: 130px;
+                height: 130px;
+            }
+
+            .presents-text {
+                font-size: 0.9rem;
+            }
+
+            /* Timer */
+            .timer-label {
+                font-size: 1.2rem;
+                letter-spacing: 2px;
+            }
+
+            .timer-display {
+                gap: 10px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            /* About event */
+            #about-event {
+                padding: 60px 5% !important;
+            }
+
+            /* Problems grid - single col on tablet */
+            .domains-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .filter-bar {
+                gap: 8px;
+                padding: 0 4% 36px;
+            }
+
+            .filter-btn {
+                font-size: 8px;
+                padding: 7px 14px;
+            }
+
+            /* Register section */
+            #register {
+                padding: 60px 5% !important;
+            }
+
+            /* Prizes section */
+            #prizes {
+                padding: 60px 5% !important;
+            }
+
+            /* Core Team - 2 col grid */
+            #core-team {
+                padding: 60px 5% !important;
+            }
+
+            #core-team>div {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 16px !important;
+            }
+
+            /* Team modal - fix card hiding/clipping on tablet */
+            #teamModalContent {
+                width: 95% !important;
+                max-width: 95% !important;
+                padding: 24px !important;
+                max-height: 92vh !important;
+            }
+
+            /* Convenors */
+            #about {
+                padding: 60px 5% !important;
+            }
+
+            /* FAQ */
+            #faq {
+                padding: 60px 5% !important;
+            }
+
+            /* Student Coordinators */
+            #contact {
+                padding: 60px 5% !important;
+            }
+
+            .coord-card {
+                min-width: 200px !important;
+            }
+
+            /* Footer */
+            footer {
+                padding: 40px 5% 30px !important;
+            }
+
+            footer>div>div {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            /* Portal login button */
+            .toggle-login-btn {
+                font-size: 0.65rem;
+                padding: 12px 6px;
+                top: 90px;
+            }
+
+            .side-login {
+                top: 64px;
+            }
+        }
+
+        /* Mobile - max 480px */
+        @media (max-width: 480px) {
+            nav {
+                padding: 10px 12px;
+            }
+
+            .logo-badge {
+                width: 38px;
+                height: 38px;
+            }
+
+            .college-logo {
+                width: 100px;
+                height: 100px;
+            }
+
+            .college-name {
+                font-size: clamp(1.1rem, 5vw, 1.8rem) !important;
+            }
+
+            .dept-name {
+                font-size: 0.5rem;
+                letter-spacing: 1px;
+            }
+
+            .hero-title {
+                font-size: clamp(2.5rem, 14vw, 5rem) !important;
+            }
+
+            .timer-val {
+                font-size: 1.8rem;
+            }
+
+            .timer-segment {
+                min-width: 38px;
+            }
+
+            .timer-sep {
+                font-size: 1.8rem;
+            }
+
+            /* Core Team - single col */
+            #core-team>div {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* Team modal - fully visible on small mobile */
+            #teamModalContent {
+                padding: 18px !important;
+                max-height: 95vh !important;
+                width: 98% !important;
+                max-width: 98% !important;
+            }
+
+            #teamModalContent ul#modalTeamMembers {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* Problem statement modal */
+            #ps-modal-overlay {
+                padding: 8px !important;
+            }
+
+            #ps-modal-box {
+                max-height: 95vh !important;
+            }
+
+            /* Section titles */
+            .section-title {
+                font-size: clamp(1.6rem, 6vw, 2.5rem) !important;
+            }
+
+            /* Prizes - single col */
+            #prizes>div {
+                max-width: 100% !important;
+            }
+
+            /* Coordinator cards - full width */
+            .coord-card {
+                min-width: 92% !important;
+                max-width: 100% !important;
+            }
+
+            /* Footer responsive */
+            footer {
+                padding: 30px 4% 20px !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Cursor -->
+    <div id="cur"></div>
+    <div id="cur-ring"></div>
+    <!-- Background -->
+    <canvas id="bgCanvas"></canvas>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <!-- Navbar -->
+    <nav>
+        <a href="#home" class="nav-logo" style="font-size:13px;letter-spacing:1.5px;">
+            <div class="logo-badge"><img src="{{ url_for('static', filename='logos/techXora.png') }}" alt="ACT"></div>
+            TECHXORA<span class="yr" style="font-size:0.9em;">'26</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="#home" class="active">Home</a></li>
+            <li><a href="#problems">Problem Statements</a></li>
+            <li><a href="#register">Register</a></li>
+            <li><a href="#about-dept">About</a></li>
+            <li><a href="#core-team">Teams</a></li>
+            <li><a href="#faq">FAQ</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+        <!-- Hamburger button for mobile -->
+        <button class="hamburger" id="hamburger" aria-label="Open menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </nav>
+
+    <!-- Side Login -->
+    <button class="toggle-login-btn" id="loginToggle" onclick="toggleLogin()">Portal Login</button>
+    <div class="side-login" id="sideLogin">
+        <h3>PORTAL LOGIN</h3>
+        <p>// Redirect to Management Portals</p>
+        <a href="{{ url_for('auth.login', role='participant') }}" class="login-btn"> ✦ Participant Portal</a>
+        <a href="{{ url_for('auth.login', role='volunteer') }}" class="login-btn"> ✦ Volunteer Portal</a>
+        <a href="{{ url_for('auth.login', role='admin') }}" class="login-btn">✦ Admin Portal</a>
+    </div>
+
+    <main>
+        <!-- Hero -->
+        <section id="home">
+            <div class="college-header">
+                <div class="college-logo">
+                    <img src="{{ url_for('static', filename='logos/act.png') }}" alt="Logo">
+                </div>
+                <div class="college-name">AGNI COLLEGE OF TECHNOLOGY</div>
+                <div class="dept-name">DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING</div>
+                <div class="presents-text">presents</div>
+            </div>
+
+            <div class="live-badge"><span class="live-dot"></span> LIVE 24-HOUR NATIONAL LEVEL HACKATHON</div>
+
+            <div class="hero-title">
+                TECHXORA<span class="sup"> '26</span><br>
+            </div>
+
+
+            <!-- Countdown Timer -->
+            <div class="timer-container">
+                <div class="timer-label"> Hackathon Starts</div>
+                <div class="timer-display" id="countdown">
+                    <div class="timer-segment">
+                        <div class="timer-val" id="cd-d">00</div>
+                        <div class="timer-lbl">Days</div>
+                    </div>
+                    <div class="timer-sep">:</div>
+                    <div class="timer-segment">
+                        <div class="timer-val" id="cd-h">00</div>
+                        <div class="timer-lbl">Hours</div>
+                    </div>
+                    <div class="timer-sep">:</div>
+                    <div class="timer-segment">
+                        <div class="timer-val" id="cd-m">00</div>
+                        <div class="timer-lbl">Minutes</div>
+                    </div>
+                    <div class="timer-sep">:</div>
+                    <div class="timer-segment">
+                        <div class="timer-val" id="cd-s">00</div>
+                        <div class="timer-lbl">Seconds</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-btns">
+                <a href="/register" class="btn-solid">✦ REGISTER NOW</a>
+            </div>
+        </section>
+
+
+
+        <!-- Problems / Choose Your Domain -->
+
+
+        <!-- About Event Section -->
+        <section id="about-event" style="padding: 100px 5%; position: relative; z-index: 10;">
+            <div
+                style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 50px;">
+                <div
+                    style="font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 6px; color: var(--pri); text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 14px;">
+                    :: ABOUT THE EVENT ::
+                </div>
+                <h2
+                    style="font-family: 'Chakra Petch', sans-serif; font-size: clamp(2rem, 5vw, 4rem); font-weight: 700; color: #fff; line-height: 1.1;">
+                    About <span
+                        style="background: linear-gradient(135deg, #c4b5fd, #a78bfa, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 16px rgba(167,139,250,0.6));">TECHXORA
+                        '26</span>
+                </h2>
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 60px; max-width: 1200px; margin: 0 auto; align-items: center;">
+                <div style="text-align: left;">
+                    <p style="font-size: 1.1rem; line-height: 1.8; color: rgba(220,210,255,0.7); margin-bottom: 24px;">
+                        TECHXORA '26 is a 24-hour national-level hackathon organized by the Department of Computer
+                        Science & Engineering, Agni College of Technology, Chennai. It brings together the brightest
+                        student minds to ideate, build, and demo functional solutions to real-world challenges.
+                    </p>
+                    <p style="font-size: 1.05rem; line-height: 1.8; color: rgba(220,210,255,0.5); margin-bottom: 40px;">
+                        Whether you're a seasoned full-stack developer or just starting your journey – TECHXORA is your
+                        stage. Collaborate with young minds, get mentored by experts, and compete for cash
+                        prizes.
+                    </p>
+
+                    <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+                        <span
+                            style="padding: 12px 24px; border: 1px solid rgba(167,139,250,0.3); border-radius: 30px; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--pri); text-transform: uppercase;">24
+                            Hrs Non-Stop</span>
+                        <span
+                            style="padding: 12px 24px; border: 1px solid rgba(167,139,250,0.3); border-radius: 30px; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--pri); text-transform: uppercase;">All
+                            Branches</span>
+                        <span
+                            style="padding: 12px 24px; border: 1px solid rgba(245,158,11,0.3); border-radius: 30px; background: rgba(245,158,11,0.05); font-family: 'Space Mono', monospace; font-size: 11px; color: var(--sec); text-transform: uppercase; box-shadow: 0 0 15px rgba(245,158,11,0.1);">Cash
+                            Prizes</span>
+
+                    </div>
+                </div>
+
+                <div
+                    style="position: relative; padding: 40px; background: rgba(10,8,22,0.6); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 0 40px rgba(167,139,250,0.08); backdrop-filter: blur(10px);">
+                    <div
+                        style="width: 100%; aspect-ratio: 16/9; border-radius: 12px; border: 1px solid rgba(167,139,250,0.2); display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 30px; position: relative;">
+                        <img src="{{ url_for('static', filename='logos/techXora.png') }}" alt="TECHXORA"
+                            style="max-height: 120%; object-fit: contain; filter: drop-shadow(0 0 20px rgba(245,158,11,0.4));">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; text-align: center;">
+                        <div>
+                            <div
+                                style="font-family: 'Orbitron', monospace; font-size: 1.5rem; font-weight: 700; color: var(--sec);">
+                                24</div>
+                            <div
+                                style="font-family: 'Space Mono', monospace; font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 5px;">
+                                HOURS</div>
+                        </div>
+                        <div>
+                            <div
+                                style="font-family: 'Orbitron', monospace; font-size: 1.5rem; font-weight: 700; color: var(--pri);">
+                                Young</div>
+                            <div
+                                style="font-family: 'Space Mono', monospace; font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 5px;">
+                                MINDS</div>
+                        </div>
+                        <div>
+                            <div
+                                style="font-family: 'Orbitron', monospace; font-size: 1.5rem; font-weight: 700; color: var(--sec);">
+                                Cash</div>
+                            <div
+                                style="font-family: 'Space Mono', monospace; font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 5px;">
+                                PRIZES</div>
+                        </div>
+                        <div>
+                            <div
+                                style="font-family: 'Orbitron', monospace; font-size: 1.5rem; font-weight: 700; color: var(--pri);">
+                                5</div>
+                            <div
+                                style="font-family: 'Space Mono', monospace; font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 5px;">
+                                DOMAINS</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="problems" style="position:relative; z-index:10; background:var(--bg); padding-bottom:60px;">
+            <style>
+                /* PAGE HEADER */
+                .page-header {
+                    position: relative;
+                    z-index: 10;
+                    padding: 70px 5% 50px;
+                    text-align: center;
+                }
+
+                .page-eyebrow {
+                    font-family: 'Space Mono', monospace;
+                    font-size: 10px;
+                    letter-spacing: 6px;
+                    color: var(--pri);
+                    text-transform: uppercase;
+                    margin-bottom: 14px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 14px;
+                }
+
+                .page-eyebrow::before,
+                .page-eyebrow::after {
+                    content: '';
+                    flex: 1;
+                    max-width: 60px;
+                    height: 1px;
+                    background: rgba(167, 139, 250, 0.35);
+                }
+
+                .page-title {
+                    font-family: 'Chakra Petch', sans-serif;
+                    font-weight: 700;
+                    font-size: clamp(28px, 5.5vw, 62px);
+                    letter-spacing: -1px;
+                    color: #fff;
+                    margin-bottom: 14px;
+                    line-height: 1.05;
+                }
+
+                .page-title span {
+                    background: linear-gradient(135deg, #c4b5fd, #a78bfa, #818cf8);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                    filter: drop-shadow(0 0 16px var(--pg));
+                }
+
+                .page-sub {
+                    font-family: 'Space Mono', monospace;
+                    font-size: 11px;
+                    letter-spacing: 3px;
+                    color: rgba(200, 195, 255, 0.4);
+                    text-transform: uppercase;
+                }
+
+                /* FILTER TABS */
+                .filter-bar {
+                    position: relative;
+                    z-index: 10;
+                    display: flex;
+                    justify-content: center;
+                    gap: 6px;
+                    flex-wrap: wrap;
+                    padding: 0 5% 50px;
+                }
+
+                .filter-btn {
+                    font-family: 'Space Mono', monospace;
+                    font-size: 9px;
+                    letter-spacing: 2px;
+                    padding: 8px 18px;
+                    background: transparent;
+                    border: 1px solid rgba(167, 139, 250, 0.15);
+                    color: rgba(200, 195, 255, 0.4);
+                    cursor: none;
+                    text-transform: uppercase;
+                    clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+                    transition: all .3s;
+                }
+
+                .filter-btn.active,
+                .filter-btn:hover {
+                    border-color: rgba(167, 139, 250, 0.6);
+                    color: var(--pri);
+                    background: rgba(167, 139, 250, 0.08);
+                }
+
+                /* DOMAINS GRID */
+                .domains-wrap {
+                    position: relative;
+                    z-index: 10;
+                    padding: 0 5% 100px;
+                }
+
+                .domains-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 2px;
+                    max-width: 1300px;
+                    margin: 0 auto;
+                }
+
+                /* DOMAIN CARD */
+                .domain-card {
+                    position: relative;
+                    overflow: hidden;
+                    background: rgba(255, 255, 255, 0.018);
+                    border: 1px solid rgba(167, 139, 250, 0.08);
+                    padding: 38px 32px 32px;
+                    cursor: none;
+                    transition: all .4s cubic-bezier(.22, 1, .36, 1);
+                }
+
+                .domain-card::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: radial-gradient(ellipse at 20% 50%, rgba(167, 139, 250, 0.07), transparent 70%);
+                    opacity: 0;
+                    transition: opacity .4s;
+                }
+
+                .domain-card::after {
+                    content: '';
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 3px;
+                    height: 0;
+                    background: linear-gradient(to bottom, var(--pri), var(--sec));
+                    transition: height .5s cubic-bezier(.22, 1, .36, 1);
+                }
+
+                .domain-card:hover {
+                    border-color: rgba(167, 139, 250, 0.25);
+                    transform: translateY(-6px);
+                    background: rgba(167, 139, 250, 0.04);
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 30px rgba(167, 139, 250, 0.06);
+                }
+
+                .domain-card:hover::before {
+                    opacity: 1;
+                }
+
+                .domain-card:hover::after {
+                    height: 100%;
+                }
+
+                /* Card top row */
+                .card-top {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 20px;
+                }
+
+                .card-num {
+                    font-family: 'Space Mono', monospace;
+                    font-size: 9px;
+                    letter-spacing: 3px;
+                    color: rgba(167, 139, 250, 0.3);
+                }
+
+                .card-badge {
+                    font-family: 'Space Mono', monospace;
+                    font-size: 8px;
+                    letter-spacing: 2px;
+                    padding: 4px 12px;
+                    border: 1px solid rgba(245, 158, 11, 0.3);
+                    color: var(--sec);
+                    text-transform: uppercase;
+                    clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+                    background: rgba(245, 158, 11, 0.04);
+                }
+
+                /* Icon */
+                .card-icon-wrap {
+                    width: 54px;
+                    height: 54px;
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-bottom: 18px;
+                    font-size: 26px;
+                    border: 1px solid rgba(167, 139, 250, 0.15);
+                    background: rgba(167, 139, 250, 0.06);
+                    transition: all .4s;
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .card-icon-wrap::after {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(135deg, rgba(167, 139, 250, 0.12), transparent);
+                    opacity: 0;
+                    transition: opacity .4s;
+                }
+
+                .domain-card:hover .card-icon-wrap {
+                    border-color: rgba(167, 139, 250, 0.4);
+                    box-shadow: 0 0 20px rgba(167, 139, 250, 0.2);
+                }
+
+                .domain-card:hover .card-icon-wrap::after {
+                    opacity: 1;
+                }
+
+                .card-title {
+                    font-family: 'Chakra Petch', sans-serif;
+                    font-size: 20px;
+                    font-weight: 700;
+                    color: #fff;
+                    margin-bottom: 10px;
+                    line-height: 1.2;
+                }
+
+                .card-desc {
+                    font-family: 'Space Mono', monospace;
+                    font-size: 10.5px;
+                    line-height: 1.9;
+                    color: rgba(200, 195, 255, 0.4);
+                    margin-bottom: 24px;
+                }
+
+                /* Tags row */
+                .card-tags {
+                    display: flex;
+                    gap: 6px;
+                    flex-wrap: wrap;
+                    margin-bottom: 28px;
+                }
+
+                .card-tag {
+                    font-family: 'Space Mono', monospace;
+                    font-size: 8px;
+                    letter-spacing: 1.5px;
+                    padding: 3px 10px;
+                    border: 1px solid rgba(167, 139, 250, 0.18);
+                    color: rgba(167, 139, 250, 0.55);
+                    text-transform: uppercase;
+                }
+
+                /* View button */
+                .view-btn {
+                    width: 100%;
+                    font-family: 'Chakra Petch', sans-serif;
+                    font-weight: 700;
+                    font-size: 11px;
+                    letter-spacing: 3px;
+                    padding: 12px 20px;
+                    background: transparent;
+                    border: 1px solid rgba(167, 139, 250, 0.25);
+                    color: var(--pri);
+                    cursor: none;
+                    text-transform: uppercase;
+                    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+                    transition: all .3s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                }
+
+                .view-btn:hover {
+                    background: rgba(167, 139, 250, 0.12);
+                    border-color: rgba(167, 139, 250, 0.6);
+                    box-shadow: 0 0 20px rgba(167, 139, 250, 0.2);
+                }
+
+                .view-btn .arr {
+                    transition: transform .3s;
+                }
+
+                .view-btn:hover .arr {
+                    transform: translateX(5px);
+                }
+
+                /* ══════════════════════════════════
+   MODAL OVERLAY
+══════════════════════════════════ */
+                #modal-overlay {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 500;
+                    background: rgba(7, 8, 20, 0.92);
+                    backdrop-filter: blur(16px);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 24px;
+                    opacity: 0;
+                    pointer-events: none;
+                    transition: opacity .35s ease;
+                }
+
+                #modal-overlay.open {
+                    opacity: 1;
+                    pointer-events: auto;
+                }
+
+                #modal {
+                    width: 100%;
+                    max-width: 900px;
+                    max-height: 90vh;
+                    background: linear-gradient(135deg, rgba(18, 14, 36, 0.98), rgba(14, 10, 28, 0.99));
+                    border: 1px solid rgba(167, 139, 250, 0.2);
+                    border-radius: 4px;
+                    overflow-y: auto;
+                    position: relative;
+                    transform: scale(0.94) translateY(20px);
+                    transition: transform .4s cubic-bezier(.22, 1, .36, 1);
+                    scrollbar-width: thin;
+                    scrollbar-color: rgba(167, 139, 250, 0.3) transparent;
+                }
+
+                #modal-overlay.open #modal {
+                    transform: scale(1) translateY(0);
+                }
+
+                #modal::-webkit-scrollbar {
+                    width: 4px;
+                }
+
+                #modal::-webkit-scrollbar-thumb {
+                    background: rgba(167, 139, 250, 0.3);
+                    border-radius: 2px;
+                }
+
+                /* Modal corner accents */
+                #modal::before,
+                #modal::after {
+                    content: '';
+                    position: absolute;
+                    width: 28px;
+                    height: 28px;
+                    border-color: rgba(167, 139, 250, 0.4);
+                    border-style: solid;
+                    z-index: 2;
+                    pointer-events: none;
+                }
+
+                #modal::before {
+                    top: 10px;
+                    left: 10px;
+                    border-width: 2px 0 0 2px;
+                }
+
+                #modal::after {
+                    bottom: 10px;
+                    right: 10px;
+                    border-width: 0 2px 2px 0;
+                }
+
+                /* Modal header */
+                .modal-header {
+                    padding: 32px 36px 24px;
+                    border-bottom: 1px solid rgba(167, 139, 250, 0.1);
+                    position: relative;
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: space-between;
+                    gap: 20px;
+                }
+
+                .modal-header-left {}
+
+                .modal-domain-num {
+                    font-family: 'Space Mono', monospace;
+                    font-size: 9px;
+                    letter-spacing: 4px;
+                    color: rgba(167, 139, 250, 0.4);
+                    text-transform: uppercase;
+                    margin-bottom: 8px;
+                }
+
+                .modal-domain-icon {
+                    font-size: 36px;
+                    display: block;
+                    margin-bottom: 10px;
+                }
+
+                .modal-domain-title {
+                    font-family: 'Chakra Petch', sans-serif;
+                    font-weight: 700;
+                    font-size: clamp(20px, 3vw, 32px);
+                    color: #fff;
+                    margin-bottom: 6px;
+                }
+
+                .modal-domain-sub {
+                    font-family: 'Space Mono', monospace;
+                    font-size: 10px;
+                    line-height: 1.8;
+                    color: rgba(200, 195, 255, 0.45);
+                    max-width: 560px;
+                }
+
+                .modal-close {
+                    width: 36px;
+                    height: 36px;
+                    flex-shrink: 0;
+                    border: 1px solid rgba(167, 139, 250, 0.25);
+                    border-radius: 50%;
+                    background: transparent;
+                    color: rgba(167, 139, 250, 0.6);
+                    cursor: none;
+                    font-size: 18px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all .3s;
+                    margin-top: 4px;
+                }
+
+                .modal-close:hover {
+                    background: rgba(167, 139, 250, 0.15);
+                    color: #fff;
+                    border-color: rgba(167, 139, 250, 0.6);
+                }
+
+                /* Modal body */
+                .modal-body {
+                    padding: 32px 36px;
+                }
+
+                .ps-label {
+                    font-family: 'Space Mono', monospace;
+                    font-size: 9px;
+                    letter-spacing: 5px;
+                    color: rgba(167, 139, 250, 0.4);
+                    text-transform: uppercase;
+                    margin-bottom: 20px;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+
+                .ps-label::after {
+                    content: '';
+                    flex: 1;
+                    height: 1px;
+                    background: rgba(167, 139, 250, 0.1);
+                }
+
+                /* Problem Statement Card */
+                .ps-card {
+                    border: 1px solid rgba(167, 139, 250, 0.1);
+                    background: rgba(255, 255, 255, 0.02);
+                    padding: 28px 28px 24px;
+                    margin-bottom: 16px;
+                    position: relative;
+                    overflow: hidden;
+                    transition: border-color .3s;
+                }
+
+                .ps-card:last-child {
+                    margin-bottom: 0;
+                }
+
+                .ps-card::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 2px;
+                    background: linear-gradient(90deg, var(--pri), var(--sec));
+                    transform: scaleX(0);
+                    transform-origin: left;
+                    transition: transform .4s ease;
+                }
+
+                .ps-card:hover {
+                    border-color: rgba(167, 139, 250, 0.22);
+                }
+
+                .ps-card:hover::before {
+                    transform: scaleX(1);
+                }
+
+                /* PS top row */
+                .ps-top {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 16px;
+                    margin-bottom: 14px;
+                    flex-wrap: wrap;
+                }
+
+                .ps-id-wrap {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+
+                .ps-id {
+                    font-family: 'Orbitron', monospace;
+                    font-size: 11px;
+                    font-weight: 700;
+                    letter-spacing: 2px;
+                    background: linear-gradient(135deg, #fcd34d, #f59e0b);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                    filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.5));
+                }
+
+                .ps-difficulty {
+                    font-family: 'Space Mono', monospace;
+                    font-size: 8px;
+                    letter-spacing: 2px;
+                    padding: 3px 10px;
+                    border-radius: 2px;
+                    text-transform: uppercase;
+                }
+
+                .ps-difficulty.hard {
+                    border: 1px solid rgba(239, 68, 68, 0.3);
+                    color: rgba(239, 68, 68, 0.8);
+                    background: rgba(239, 68, 68, 0.06);
+                }
+
+                .ps-difficulty.medium {
+                    border: 1px solid rgba(245, 158, 11, 0.3);
+                    color: rgba(245, 158, 11, 0.8);
+                    background: rgba(245, 158, 11, 0.06);
+                }
+
+                .ps-difficulty.open {
+                    border: 1px solid rgba(167, 139, 250, 0.3);
+                    color: rgba(167, 139, 250, 0.8);
+                    background: rgba(167, 139, 250, 0.06);
+                }
+
+                .ps-title {
+                    font-family: 'Chakra Petch', sans-serif;
+                    font-size: 16px;
+                    font-weight: 700;
+                    color: #fff;
+                    margin-bottom: 10px;
+                }
+
+                .ps-desc {
+                    font-family: 'Space Mono', monospace;
+                    font-size: 10.5px;
+                    line-height: 1.95;
+                    color: rgba(200, 195, 255, 0.5);
+                    margin-bottom: 18px;
+                }
+
+                /* PS footer */
+                .ps-footer {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    flex-wrap: wrap;
+                    gap: 12px;
+                }
+
+                .ps-tags {
+                    display: flex;
+                    gap: 6px;
+                    flex-wrap: wrap;
+                }
+
+                .ps-tag {
+                    font-family: 'Space Mono', monospace;
+                    font-size: 8px;
+                    letter-spacing: 1.5px;
+                    padding: 3px 9px;
+                    border: 1px solid rgba(167, 139, 250, 0.15);
+                    color: rgba(167, 139, 250, 0.5);
+                    text-transform: uppercase;
+                }
+
+                /* Download PDF button */
+                .dl-btn {
+                    font-family: 'Chakra Petch', sans-serif;
+                    font-weight: 700;
+                    font-size: 10px;
+                    letter-spacing: 3px;
+                    padding: 10px 22px;
+                    background: linear-gradient(135deg, rgba(167, 139, 250, 0.15), rgba(129, 140, 248, 0.1));
+                    border: 1px solid rgba(167, 139, 250, 0.35);
+                    color: var(--pri);
+                    cursor: none;
+                    text-transform: uppercase;
+                    clip-path: polygon(7px 0%, 100% 0%, calc(100% - 7px) 100%, 0% 100%);
+                    transition: all .3s;
+                    display: flex;
+                    align-items: center;
+                    gap: 7px;
+                    text-decoration: none;
+                }
+
+                .dl-btn:hover {
+                    background: linear-gradient(135deg, rgba(167, 139, 250, 0.28), rgba(129, 140, 248, 0.2));
+                    border-color: var(--pri);
+                    color: #fff;
+                    box-shadow: 0 0 20px rgba(167, 139, 250, 0.3);
+                }
+
+                .dl-icon {
+                    font-size: 13px;
+                }
+
+                /* Modal footer */
+                .modal-footer {
+                    padding: 20px 36px 28px;
+                    border-top: 1px solid rgba(167, 139, 250, 0.08);
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    flex-wrap: wrap;
+                    gap: 12px;
+                }
+
+                .modal-note {
+                    font-family: 'Space Mono', monospace;
+                    font-size: 9px;
+                    letter-spacing: 2px;
+                    color: rgba(200, 195, 255, 0.28);
+                    text-transform: uppercase;
+                }
+
+                .modal-dl-all {
+                    font-family: 'Chakra Petch', sans-serif;
+                    font-weight: 700;
+                    font-size: 11px;
+                    letter-spacing: 3px;
+                    padding: 12px 28px;
+                    background: linear-gradient(135deg, #a78bfa, #818cf8);
+                    color: #fff;
+                    cursor: none;
+                    border: none;
+                    text-transform: uppercase;
+                    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+                    box-shadow: 0 0 24px rgba(167, 139, 250, 0.35);
+                    transition: all .3s;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .modal-dl-all:hover {
+                    box-shadow: 0 0 40px rgba(167, 139, 250, 0.6);
+                    transform: translateY(-2px);
+                }
+
+                /* Reveal animation */
+                .reveal {
+                    opacity: 0;
+                    transform: translateY(30px);
+                    transition: opacity .7s ease, transform .7s ease;
+                }
+
+                .reveal.visible {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+
+                @media(max-width:900px) {
+                    .domains-grid {
+                        grid-template-columns: repeat(2, 1fr);
+                    }
+                }
+
+                @media(max-width:580px) {
+                    .domains-grid {
+                        grid-template-columns: 1fr;
+                    }
+
+                    .modal-header,
+                    .modal-body,
+                    .modal-footer {
+                        padding-left: 22px;
+                        padding-right: 22px;
+                    }
+                }
+            </style>
+            <!-- PAGE HEADER -->
+            <div class="page-header">
+                <div class="page-eyebrow">TECHXORA '26</div>
+                <h1 class="page-title">Problem <span>Statements</span></h1>
+                <p class="page-sub">5 Domains · 9 Challenges · Pick Your Arena</p>
+            </div>
+
+            <!-- FILTER BAR -->
+            <div class="filter-bar">
+                <button class="filter-btn active" onclick="filterDomains('all',this)">All Domains</button>
+                <button class="filter-btn" onclick="filterDomains('CS',this)">Climate & Sustainability</button>
+                <button class="filter-btn" onclick="filterDomains('HT',this)">HealthTech</button>
+                <button class="filter-btn" onclick="filterDomains('ET',this)">EdTech</button>
+                <button class="filter-btn" onclick="filterDomains('CY',this)">Cybersecurity</button>
+                <button class="filter-btn" onclick="filterDomains('SI',this)">Student Innovation</button>
+            </div>
+
+            <!-- DOMAIN CARDS -->
+            <div class="domains-wrap">
+                <div class="domains-grid" id="domainsGrid">
+
+                    <!-- Climate & Sustainability Tech -->
+                    <div class="domain-card reveal" data-domain="CS" onclick="openModal('CS')">
+                        <div class="card-top">
+                            <span class="card-num">01 // DOMAIN</span>
+                        </div>
+                        <div class="card-title">Climate & Sustainability Tech</div>
+                        <button class="view-btn">View Problem Statements <span class="arr">→</span></button>
+                    </div>
+
+                    <!-- HealthTech -->
+                    <div class="domain-card reveal" data-domain="HT" onclick="openModal('HT')">
+                        <div class="card-top">
+                            <span class="card-num">02 // DOMAIN</span>
+                        </div>
+                        <div class="card-title">HealthTech</div>
+                        <button class="view-btn">View Problem Statements <span class="arr">→</span></button>
+                    </div>
+
+                    <!-- EdTech -->
+                    <div class="domain-card reveal" data-domain="ET" onclick="openModal('ET')">
+                        <div class="card-top">
+                            <span class="card-num">03 // DOMAIN</span>
+                        </div>
+                        <div class="card-title">EdTech</div>
+                        <button class="view-btn">View Problem Statements <span class="arr">→</span></button>
+                    </div>
+
+                    <!-- Cybersecurity -->
+                    <div class="domain-card reveal" data-domain="CY" onclick="openModal('CY')">
+                        <div class="card-top">
+                            <span class="card-num">04 // DOMAIN</span>
+                        </div>
+                        <div class="card-title">Cybersecurity</div>
+                        <button class="view-btn">View Problem Statements <span class="arr">→</span></button>
+                    </div>
+
+                    <!-- Student Innovation -->
+                    <div class="domain-card reveal" data-domain="SI" onclick="openModal('SI')">
+                        <div class="card-top">
+                            <span class="card-num">05 // DOMAIN</span>
+                        </div>
+                        <div class="card-title">Student Innovation</div>
+                        <button class="view-btn">View Problem Statements <span class="arr">→</span></button>
+                    </div>
+
+                </div>
+            </div>
+
+
+
+            <script>
+                /* ══ FETCH & RENDER DOMAINS ══ */
+                let cachedProblems = null;
+
+                async function loadProblemsForDomain(domainCode, containerElement) {
+                    try {
+                        if (!cachedProblems) {
+                            const res = await fetch('/api/problems');
+                            cachedProblems = await res.json();
+                        }
+
+                        const domainData = cachedProblems.find(d => d.code.toLowerCase() === domainCode.toLowerCase() || d.code === domainCode);
+                        if (!domainData || !domainData.problems || domainData.problems.length === 0) {
+                            containerElement.innerHTML = `<div style="padding: 15px; color: var(--muted); font-size: 12px;">No problem statements found for this domain yet.</div>`;
+                            return;
+                        }
+
+                        containerElement.innerHTML = domainData.problems.map(p => `
+            <div class="ps-card" style="margin-top: 16px; text-align: left; cursor: default;">
+                <div class="ps-top">
+                    <div class="ps-id-wrap">
+                        <span class="ps-id">${p.prob_id || p.id}</span>
+                        <span class="ps-difficulty medium">Slots Left: ${p.remaining_slots || 0}</span>
+                    </div>
+                </div>
+                <div class="ps-title">${p.title}</div>
+                <div class="ps-desc">${p.description}</div>
+                <div class="ps-footer">
+                    <a class="dl-btn" href="/api/problem-pdf/${p.id}" target="_blank">
+                        <span class="dl-icon">⬇</span> Download PDF
+                    </a>
+                </div>
+            </div>
+        `).join('');
+                    } catch (error) {
+                        console.error('Error fetching problems:', error);
+                        containerElement.innerHTML = `<div style="padding: 15px; color: red; font-size: 12px;">Failed to load statements.</div>`;
+                    }
+                }
+
+                /* ══ DOMAIN CARD CENTERED MODAL ══ */
+                const domainTitles = {
+                    'CS': 'Climate & Sustainability Tech',
+                    'HT': 'HealthTech',
+                    'ET': 'EdTech',
+                    'CY': 'Cybersecurity',
+                    'SI': 'Student Innovation',
+                };
+
+                async function openModal(domainKey) {
+                    const overlay = document.getElementById('ps-modal-overlay');
+                    const box = document.getElementById('ps-modal-box');
+                    const eyebrow = document.getElementById('ps-modal-eyebrow');
+                    const titleEl = document.getElementById('ps-modal-title');
+                    const body = document.getElementById('ps-modal-body');
+
+                    // Set header info
+                    eyebrow.textContent = '01 // DOMAIN';
+                    titleEl.textContent = domainTitles[domainKey] || domainKey;
+
+                    // Show loading
+                    body.innerHTML = `<div style="padding:30px; text-align:center; color:var(--pri); font-family:'Space Mono',monospace; font-size:12px;">Loading statements…</div>`;
+
+                    // Show overlay (flex + fade in)
+                    overlay.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                    requestAnimationFrame(() => {
+                        overlay.style.opacity = '1';
+                        box.style.transform = 'scale(1) translateY(0)';
+                    });
+
+                    // Fetch and render
+                    await loadProblemsForDomain(domainKey, body);
+                }
+
+                function closePsModalBtn() {
+                    const overlay = document.getElementById('ps-modal-overlay');
+                    const box = document.getElementById('ps-modal-box');
+                    overlay.style.opacity = '0';
+                    box.style.transform = 'scale(0.93) translateY(24px)';
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }, 320);
+                }
+
+                function closePsModal(e) {
+                    if (e.target === document.getElementById('ps-modal-overlay')) {
+                        closePsModalBtn();
+                    }
+                }
+
+                // Close on Escape key
+                document.addEventListener('keydown', e => {
+                    if (e.key === 'Escape') closePsModalBtn();
+                });
+
+                /* ══ FILTER ══ */
+                function filterDomains(domain, btn) {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.querySelectorAll('.domain-card').forEach(card => {
+                        if (domain === 'all' || card.dataset.domain === domain) {
+                            card.style.display = '';
+                            card.style.animation = 'fadeInCard .4s ease forwards';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                }
+
+                /* ══ BACKGROUND ══ */
+                const bgCanvasElem = document.getElementById('bgCanvas');
+                const ctx_bg = bgCanvasElem.getContext('2d');
+                let W_bg, H_bg;
+                function resize_bg() { W_bg = bgCanvasElem.width = window.innerWidth; H_bg = bgCanvasElem.height = window.innerHeight; }
+                resize_bg(); window.addEventListener('resize', resize_bg);
+
+                const STARS_bg = Array.from({ length: 200 }, () => ({
+                    x: Math.random(), y: Math.random(),
+                    r: .1 + Math.random() * 1.1, a: .04 + Math.random() * .4,
+                    ph: Math.random() * Math.PI * 2, spd: .0002 + Math.random() * .001,
+                }));
+                const BLOBS_bg = [
+                    { x: .15, y: .2, r: .45, c: '70,50,150', ph: 0, spd: .00020 },
+                    { x: .82, y: .15, r: .38, c: '50,40,130', ph: 2.1, spd: .00016 },
+                    { x: .5, y: .8, r: .36, c: '90,60,180', ph: 4.5, spd: .0003 },
+                ];
+                const PARTS_bg = Array.from({ length: 60 }, () => ({
+                    x: Math.random() * 9999, y: Math.random() * 9999,
+                    vx: (Math.random() - .5) * .22, vy: (Math.random() - .5) * .22,
+                    r: .5 + Math.random() * 1.5, a: .15 + Math.random() * .4, ph: Math.random() * Math.PI * 2,
+                }));
+                let last_bg = 0;
+                function loop_bg(t) {
+                    const dt = Math.min(t - last_bg, 50); last_bg = t;
+                    ctx_bg.fillStyle = '#0d0e1a'; ctx_bg.fillRect(0, 0, W_bg, H_bg);
+                    // nebula
+                    for (const b of BLOBS_bg) {
+                        const ox = Math.sin(t * b.spd + b.ph) * .1, oy = Math.cos(t * b.spd * .7 + b.ph) * .09;
+                        const cx = (b.x + ox) * W_bg, cy = (b.y + oy) * H_bg, r = b.r * Math.max(W_bg, H_bg);
+                        const g = ctx_bg.createRadialGradient(cx, cy, 0, cx, cy, r);
+                        g.addColorStop(0, `rgba(${b.c},0.09)`); g.addColorStop(1, `rgba(${b.c},0)`);
+                        ctx_bg.fillStyle = g; ctx_bg.fillRect(0, 0, W_bg, H_bg);
+                    }
+                    // stars
+                    for (const s of STARS_bg) {
+                        const p = .5 + .5 * Math.sin(t * s.spd + s.ph);
+                        ctx_bg.beginPath(); ctx_bg.arc(s.x * W_bg, s.y * H_bg, s.r, 0, Math.PI * 2);
+                        ctx_bg.fillStyle = `rgba(167,139,250,${s.a * p})`; ctx_bg.fill();
+                    }
+                    // particles
+                    const CD = 100;
+                    for (let i = 0; i < PARTS_bg.length; i++) {
+                        const a = PARTS_bg[i]; a.x += a.vx; a.y += a.vy;
+                        if (a.x < 0) a.x = W_bg; if (a.x > W_bg) a.x = 0; if (a.y < 0) a.y = H_bg; if (a.y > H_bg) a.y = 0;
+                        for (let j = i + 1; j < PARTS_bg.length; j++) {
+                            const b = PARTS_bg[j]; const dx = a.x - b.x, dy = a.y - b.y, d = Math.sqrt(dx * dx + dy * dy);
+                            if (d < CD) { ctx_bg.beginPath(); ctx_bg.strokeStyle = `rgba(80,60,180,${(1 - d / CD) * .08})`; ctx_bg.lineWidth = .5; ctx_bg.moveTo(a.x, a.y); ctx_bg.lineTo(b.x, b.y); ctx_bg.stroke(); }
+                        }
+                        const p = .6 + .4 * Math.sin(t * .002 + a.ph);
+                        ctx_bg.beginPath(); ctx_bg.arc(a.x, a.y, a.r * p, 0, Math.PI * 2);
+                        ctx_bg.fillStyle = `rgba(167,139,250,${a.a})`; ctx_bg.shadowBlur = 6; ctx_bg.shadowColor = 'rgba(167,139,250,.6)';
+                        ctx_bg.fill(); ctx_bg.shadowBlur = 0;
+                    }
+                    requestAnimationFrame(loop_bg);
+                }
+                requestAnimationFrame(loop_bg);
+
+                /* CURSOR */
+                const cur_bg = document.getElementById('cur'), ring_bg = document.getElementById('cur-ring');
+                let mx_bg = 0, my_bg = 0, rx_bg = 0, ry_bg = 0;
+                document.addEventListener('mousemove', e => { mx_bg = e.clientX; my_bg = e.clientY; });
+                (function cl_bg() { rx_bg += (mx_bg - rx_bg) * .12; ry_bg += (my_bg - ry_bg) * .12; cur_bg.style.left = (mx_bg - 5) + 'px'; cur_bg.style.top = (my_bg - 5) + 'px'; ring_bg.style.left = (rx_bg - 16) + 'px'; ring_bg.style.top = (ry_bg - 16) + 'px'; requestAnimationFrame(cl_bg); })();
+
+                /* SCROLL REVEAL */
+                const obs = new IntersectionObserver(entries => {
+                    entries.forEach((e, i) => { if (e.isIntersecting) { e.target.style.transitionDelay = (i * .1) + 's'; e.target.classList.add('visible'); } });
+                }, { threshold: .1 });
+                document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+            </script>
+        </section>
+
+        <!-- ══════════════════════════════════════════
+             ARE YOU READY
+        ══════════════════════════════════════════ -->
+        <section id="register"
+            style="min-height:60vh;justify-content:center;text-align:center;background:linear-gradient(180deg,transparent,rgba(167,139,250,0.04),transparent);">
+            <div style="max-width:780px;width:100%;">
+                <div
+                    style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:5px;color:var(--pri);text-transform:uppercase;margin-bottom:18px;">
+                    // The Ultimate Challenge</div>
+                <h2
+                    style="font-family:'Orbitron',monospace;font-size:clamp(3rem,10vw,7rem);font-weight:900;line-height:0.88;margin-bottom:20px;background:linear-gradient(135deg,#c4b5fd,#a78bfa,#818cf8,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 40px rgba(167,139,250,0.5));">
+                    ARE YOU<br>READY?</h2>
+                <p
+                    style="font-family:'Chakra Petch',sans-serif;font-size:1.1rem;color:rgba(220,210,255,0.55);max-width:520px;margin:0 auto 40px;line-height:1.7;">
+                    24 hours, 1 problem. Your best solution. Bring your team, push your limits, and compete for glory at
+                    TECHXORA '26.</p>
+                <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-bottom:48px;">
+                    <a href="/register"
+                        style="display:inline-block;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:13px;letter-spacing:4px;padding:18px 52px;background:linear-gradient(135deg,#a78bfa,#818cf8);color:#fff;cursor:pointer;border:none;text-decoration:none;text-transform:uppercase;clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%);box-shadow:0 0 40px rgba(167,139,250,0.5);transition:all .3s;"
+                        onmouseover="this.style.boxShadow='0 0 70px rgba(167,139,250,0.8)';this.style.transform='translateY(-3px)'"
+                        onmouseout="this.style.boxShadow='0 0 40px rgba(167,139,250,0.5)';this.style.transform=''">✦
+                        REGISTER YOUR TEAM</a>
+                    <a href="#problems"
+                        style="display:inline-block;font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:13px;letter-spacing:3px;padding:17px 44px;background:transparent;color:var(--pri);text-decoration:none;text-transform:uppercase;border:1px solid rgba(167,139,250,0.4);clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);transition:all .3s;"
+                        onmouseover="this.style.background='rgba(167,139,250,0.08)';this.style.borderColor='var(--pri)'"
+                        onmouseout="this.style.background='transparent';this.style.borderColor='rgba(167,139,250,0.4)'">→
+                        VIEW PROBLEMS</a>
+                </div>
+                <!-- Quick Stats -->
+                <div
+                    style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:20px;max-width:680px;margin:0 auto;">
+                    <div
+                        style="padding:24px 16px;background:rgba(167,139,250,0.05);border:1px solid rgba(167,139,250,0.15);border-radius:10px;text-align:center;">
+                        <div
+                            style="font-family:'Orbitron',monospace;font-size:2.2rem;font-weight:900;color:var(--pri);line-height:1;">
+                            24</div>
+                        <div
+                            style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-top:6px;">
+                            Hour Hack</div>
+                    </div>
+                    <div
+                        style="padding:24px 16px;background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);border-radius:10px;text-align:center;">
+                        <div
+                            style="font-family:'Orbitron',monospace;font-size:2.2rem;font-weight:900;color:var(--sec);line-height:1;">
+                            Cash</div>
+                        <div
+                            style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-top:6px;">
+                            Prizes</div>
+                    </div>
+                    <div
+                        style="padding:24px 16px;background:rgba(167,139,250,0.05);border:1px solid rgba(167,139,250,0.15);border-radius:10px;text-align:center;">
+                        <div
+                            style="font-family:'Orbitron',monospace;font-size:2.2rem;font-weight:900;color:var(--pri);line-height:1;">
+                            5</div>
+                        <div
+                            style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-top:6px;">
+                            Domains</div>
+                    </div>
+                    <div
+                        style="padding:24px 16px;background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);border-radius:10px;text-align:center;">
+                        <div
+                            style="font-family:'Orbitron',monospace;font-size:2.2rem;font-weight:900;color:var(--sec);line-height:1;">
+                            2–4</div>
+                        <div
+                            style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-top:6px;">
+                            Members</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ══════════════════════════════════════════
+             PRIZES & REWARDS
+        ══════════════════════════════════════════ -->
+        <section id="prizes" style="padding:80px 5%;text-align:center;">
+            <h2 class="section-title">PRIZES &amp; REWARDS</h2>
+            <p class="section-sub">Compete hard. Win big. Every domain crowns a champion.</p>
+            <div
+                style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:28px;max-width:1100px;width:100%;">
+
+                <!-- 1st -->
+                <div
+                    style="padding:36px 28px;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(167,139,250,0.06));border:1px solid rgba(245,158,11,0.35);border-radius:14px;position:relative;overflow:hidden;text-align:center;">
+                    <div
+                        style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#f59e0b,transparent);">
+                    </div>
+                    <div style="font-size:3rem;margin-bottom:16px;">🥇</div>
+                    <div
+                        style="font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;color:var(--sec);text-transform:uppercase;margin-bottom:8px;">
+                        First Place</div>
+                    <!--<div
+                        style="font-family:'Orbitron',monospace;font-size:3rem;font-weight:900;color:var(--sec);line-height:1;filter:drop-shadow(0 0 20px rgba(245,158,11,0.6));margin-bottom:8px;">
+                        ₹25,000</div> -->
+                    <!--<div
+                        style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;">
+                        Per Domain Winner</div>-->
+                    <ul style="list-style:none;text-align:left;">
+                        <li
+                            style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(220,210,255,0.6);margin-bottom:8px;padding-left:16px;position:relative;">
+                            <span style="position:absolute;left:0;color:var(--sec);">▸</span>Trophy + Certificate
+                        </li>
+                        <!--<li
+                            style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(220,210,255,0.6);margin-bottom:8px;padding-left:16px;position:relative;">
+                            <span style="position:absolute;left:0;color:var(--sec);">▸</span>Internship opportunities
+                        </li>
+                        <li
+                            style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(220,210,255,0.6);padding-left:16px;position:relative;">
+                            <span style="position:absolute;left:0;color:var(--sec);">▸</span>Product incubation support
+                        </li>-->
+                    </ul>
+                </div>
+
+                <!-- 2nd -->
+                <div
+                    style="padding:36px 28px;background:linear-gradient(135deg,rgba(167,139,250,0.07),rgba(129,140,248,0.05));border:1px solid rgba(167,139,250,0.3);border-radius:14px;position:relative;overflow:hidden;text-align:center;">
+                    <div
+                        style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#a78bfa,transparent);">
+                    </div>
+                    <div style="font-size:3rem;margin-bottom:16px;">🥈</div>
+                    <div
+                        style="font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;color:var(--pri);text-transform:uppercase;margin-bottom:8px;">
+                        Second Place</div>
+                    <!--<div
+                        style="font-family:'Orbitron',monospace;font-size:3rem;font-weight:900;color:var(--pri);line-height:1;filter:drop-shadow(0 0 20px rgba(167,139,250,0.5));margin-bottom:8px;">
+                        ₹15,000</div>-->
+                    <!-- <div
+                        style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;">
+                        Per Domain Runner-Up</div>-->
+                    <ul style="list-style:none;text-align:left;">
+                        <li
+                            style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(220,210,255,0.6);margin-bottom:8px;padding-left:16px;position:relative;">
+                            <span style="position:absolute;left:0;color:var(--pri);">▸</span> Trophy + Certificate
+                        </li>
+                        <!--<li
+                            style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(220,210,255,0.6);margin-bottom:8px;padding-left:16px;position:relative;">
+                            <span style="position:absolute;left:0;color:var(--pri);">▸</span>Mentorship sessions
+                        </li>
+                        <li
+                            style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(220,210,255,0.6);padding-left:16px;position:relative;">
+                            <span style="position:absolute;left:0;color:var(--pri);">▸</span>Partner company exposure
+                        </li>-->
+                    </ul>
+                </div>
+
+                <!-- 3rd -->
+                <div
+                    style="padding:36px 28px;background:linear-gradient(135deg,rgba(52,211,153,0.06),rgba(167,139,250,0.04));border:1px solid rgba(52,211,153,0.25);border-radius:14px;position:relative;overflow:hidden;text-align:center;">
+                    <div
+                        style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#34d399,transparent);">
+                    </div>
+                    <div style="font-size:3rem;margin-bottom:16px;">🥉</div>
+                    <div
+                        style="font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;color:#34d399;text-transform:uppercase;margin-bottom:8px;">
+                        Third Place</div>
+                    <!--<div
+                        style="font-family:'Orbitron',monospace;font-size:3rem;font-weight:900;color:#34d399;line-height:1;filter:drop-shadow(0 0 20px rgba(52,211,153,0.5));margin-bottom:8px;">
+                        ₹10,000</div>-->
+                    <!--<div
+                        style="font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;">
+                        Per Domain Third</div>-->
+                    <ul style="list-style:none;text-align:left;">
+                        <li
+                            style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(220,210,255,0.6);margin-bottom:8px;padding-left:16px;position:relative;">
+                            <span style="position:absolute;left:0;color:#34d399;">▸</span>Bronze Trophy + Certificate
+                        </li>
+                        <!--<li
+                            style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(220,210,255,0.6);margin-bottom:8px;padding-left:16px;position:relative;">
+                            <span style="position:absolute;left:0;color:#34d399;">▸</span>All-participant certificates
+                        </li>
+                        <li
+                            style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(220,210,255,0.6);padding-left:16px;position:relative;">
+                            <span style="position:absolute;left:0;color:#34d399;">▸</span>Special recognition award
+                        </li>-->
+                    </ul>
+                </div>
+
+            </div>
+
+
+            <!-- About Department -->
+            <section id="about-dept">
+                <div class="dept-content">
+                    <div class="dept-text">
+                        <h2 class="section-title">ABOUT OUR DEPARTMENT</h2>
+                        <p>The Department of Computer Science and Engineering is a hub of innovation, research, and
+                            technical excellence. We empower students to tackle global challenges through cutting-edge
+                            technology and collaborative projects.</p>
+                        <p>TECHXORA 26 is our flagship event, designed to push the boundaries of creativity and
+                            problem-solving in a high-stakes, 24-hour environment.</p>
+                    </div>
+                    <div class="dept-features">
+                        <div class="dept-feat-card">
+                            <span class="dept-feat-icon"></span>
+                            <div class="dept-feat-title">Innovation Labs</div>
+                        </div>
+                        <div class="dept-feat-card">
+                            <span class="dept-feat-icon"></span>
+                            <div class="dept-feat-title">Global Research</div>
+                        </div>
+                        <div class="dept-feat-card">
+                            <span class="dept-feat-icon"></span>
+                            <div class="dept-feat-title">Industry Ties</div>
+                        </div>
+                        <div class="dept-feat-card">
+                            <span class="dept-feat-icon"></span>
+                            <div class="dept-feat-title">Legacy of Excellence</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <div style="text-align:center; margin-bottom:50px;">
+                <div
+                    style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:6px;color:var(--pri);text-transform:uppercase;margin-bottom:14px;">
+                    :: GET IN TOUCH ::
+                </div>
+                <h2
+                    style="font-family:'Chakra Petch',sans-serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:700;color:#fff;line-height:1.1;">
+                    STUDENT <span
+                        style="background:linear-gradient(135deg,#c4b5fd,#a78bfa,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">COORDINATORS</span>
+                </h2>
+            </div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:28px;justify-content:center;max-width:1050px;margin:0 auto;">
+
+                <div class="coord-card">
+                    <div class="coord-name">VARUN KALYAN K</div>
+                    <a class="coord-phone">+91 73587 89879</a>
+                </div>
+
+                <div class="coord-card">
+                    <div class="coord-name">BALAJI ADJ</div>
+                    <a class="coord-phone">+91 86818 73891</a>
+                </div>
+
+                <div class="coord-card">
+                    <div class="coord-name">MAGHALAKSHMI P</div>
+                    <a class="coord-phone">+91 72007 95541</a>
+                </div>
+
+            </div>
+        </section>
+        <!-- Core Team Section -->
+        <section id="core-team" style="padding: 100px 5%; position: relative; z-index: 10;">
+            <div style="text-align: center; margin-bottom: 60px;">
+                <h2 class="section-title">CORE TEAM</h2>
+                <p class="section-sub">The Student force driving TECHXORA '26 </p>
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 1100px; margin: 0 auto;">
+                <!-- 1. Website Team -->
+                <div class="team-card" onclick="openTeamModal('website')"
+                    style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                    <div style="font-size: 2.5rem; margin-bottom: 15px;">💻</div>
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 1.2rem; color: var(--pri); margin-bottom: 8px;">
+                        Website Team</h3>
+                    <p style="font-size: 0.85rem; color: var(--muted);">Platform & Portals</p>
+                </div>
+
+                <!-- 2. Design Team -->
+                <div class="team-card" onclick="openTeamModal('design')"
+                    style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                    <div style="font-size: 2.5rem; margin-bottom: 15px;">🎨</div>
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 1.2rem; color: var(--sec); margin-bottom: 8px;">
+                        Design Team</h3>
+                    <p style="font-size: 0.85rem; color: var(--muted);">Socials & Aesthetics</p>
+                </div>
+
+                <!-- 3. Registration Team -->
+                <div class="team-card" onclick="openTeamModal('registration')"
+                    style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                    <div style="font-size: 2.5rem; margin-bottom: 15px;">📋</div>
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 1.2rem; color: var(--pri); margin-bottom: 8px;">
+                        Registration Team</h3>
+                    <p style="font-size: 0.85rem; color: var(--muted);">Onboarding & Data</p>
+                </div>
+
+                <!-- 4. Technical Team  -->
+                <div class="team-card" onclick="openTeamModal('technical')"
+                    style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                    <div style="font-size: 2.5rem; margin-bottom: 15px;">⚙️</div>
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 1.2rem; color: var(--sec); margin-bottom: 8px;">
+                        Technical Team </h3>
+                    <p style="font-size: 0.85rem; color: var(--muted);">Infrastructure & Support</p>
+                </div>
+
+                <!-- 5. Student Mentors -->
+                <div class="team-card" onclick="openTeamModal('mentors')"
+                    style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                    <div style="font-size: 2.5rem; margin-bottom: 15px;">👨‍🏫</div>
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 1.2rem; color: var(--pri); margin-bottom: 8px;">
+                        Student Mentors</h3>
+                    <p style="font-size: 0.85rem; color: var(--muted);">Guidance & Operations</p>
+                </div>
+
+                <!-- 6. Marketing -->
+                <div class="team-card" onclick="openTeamModal('marketing')"
+                    style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                    <div style="font-size: 2.5rem; margin-bottom: 15px;">🚀</div>
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 1.2rem; color: var(--sec); margin-bottom: 8px;">
+                        Marketing</h3>
+                    <p style="font-size: 0.85rem; color: var(--muted);">Outreach & Growth</p>
+                </div>
+
+                <!-- 7. Sponsorship -->
+                <div class="team-card" onclick="openTeamModal('sponsorship')"
+                    style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                    <div style="font-size: 2.5rem; margin-bottom: 15px;">🤝</div>
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 1.2rem; color: var(--pri); margin-bottom: 8px;">
+                        Sponsorship</h3>
+                    <p style="font-size: 0.85rem; color: var(--muted);">Partners & Prizes</p>
+                </div>
+
+                <!-- 8. Judging Panel -->
+                <div class="team-card" onclick="openTeamModal('judging')"
+                    style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                    <div style="font-size: 2.5rem; margin-bottom: 15px;">⚖️</div>
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 1.2rem; color: var(--sec); margin-bottom: 8px;">
+                        Judging Panel</h3>
+                    <p style="font-size: 0.85rem; color: var(--muted);">Evaluation & Scoring</p>
+                </div>
+
+                <!-- 9. Finance -->
+                <div class="team-card" onclick="openTeamModal('finance')"
+                    style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                    <div style="font-size: 2.5rem; margin-bottom: 15px;">💰</div>
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 1.2rem; color: var(--pri); margin-bottom: 8px;">
+                        Finance</h3>
+                    <p style="font-size: 0.85rem; color: var(--muted);">Budgets & Accounts</p>
+                </div>
+
+                <!-- 10. Food and Venue -->
+                <div class="team-card" onclick="openTeamModal('food_venue')"
+                    style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.3s;">
+                    <div style="font-size: 2.5rem; margin-bottom: 15px;">🏨</div>
+                    <h3
+                        style="font-family: 'Chakra Petch', sans-serif; font-size: 1.2rem; color: var(--sec); margin-bottom: 8px;">
+                        Food & Venue</h3>
+                    <p style="font-size: 0.85rem; color: var(--muted);">Hospitality & Operations</p>
+                </div>
+            </div>
+
+
+            <style>
+                .team-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 10px 30px rgba(167, 139, 250, 0.15);
+                    border-color: rgba(167, 139, 250, 0.4);
+                }
+            </style>
+        </section>
+
+        <!-- Core Team Modal Overlay -->
+        <div id="teamModalOverlay"
+            style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 10000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;">
+            <div id="teamModalContent"
+                style="background: var(--bg); border: 1px solid var(--border); border-radius: 16px; width: 90%; max-width: 500px; padding: 40px; position: relative; transform: scale(0.9); transition: transform 0.3s ease; box-shadow: 0 0 40px rgba(167,139,250, 0.15); max-height: 85vh; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(167,139,250,0.3) transparent;">
+                <button onclick="closeTeamModal()" id="teamModalCloseBtn"
+                    style="position: absolute; top: 16px; right: 16px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.3); border-radius: 50%; color: var(--muted); font-size: 1.3rem; cursor: pointer; transition: all 0.2s; line-height:1;"
+                    onmouseover="this.style.background='rgba(167,139,250,0.25)';this.style.color='#fff';"
+                    onmouseout="this.style.background='rgba(167,139,250,0.1)';this.style.color='';">✕</button>
+                <div
+                    style="width: 80px; height: 80px; margin: 0 auto 15px; border-radius: 50%; border: 2px solid rgba(167, 139, 250, 0.4); overflow: hidden; background: #000; box-shadow: 0 0 20px rgba(167, 139, 250, 0.3);">
+                    <img src="{{ url_for('static', filename='logos/techXora.png') }}" alt="Team Icon"
+                        style="width: 100%; height: 100%; object-fit: contain;">
+                </div>
+                <h3 id="modalTeamName"
+                    style="font-family: 'Chakra Petch', sans-serif; font-size: 1.8rem; color: var(--pri); text-align: center; margin-bottom: 30px;">
+                    Team Name</h3>
+
+                <div style="margin-bottom: 25px;">
+                    <div
+                        style="font-family: 'Space Mono', monospace; font-size: 10px; color: var(--sec); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;">
+                        TEAM HEAD(S)</div>
+                    <div id="modalTeamHead" style="display: flex; flex-direction: column; gap: 10px;">
+                        <!-- Heads will be injected here with individual box styles -->
+                    </div>
+                </div>
+
+                <div>
+                    <div
+                        style="font-family: 'Space Mono', monospace; font-size: 10px; color: var(--pri); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;">
+                        MEMBERS</div>
+                    <ul id="modalTeamMembers"
+                        style="list-style: none; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+                        <!-- Members injected via JS -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Convenors -->
+        <section id="about" style="padding:80px 24px;">
+            <h2 class="section-title">CONVENORS &amp; PATRONS</h2>
+            <p class="section-sub">Meet the visionaries and leaders who make TECHXORA 26 possible.</p>
+
+            <div style="display:flex;flex-wrap:wrap;gap:32px;justify-content:center;margin-top:48px;max-width:1100px;">
+
+                <!-- Principal -->
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:36px 28px;text-align:center;width:260px;transition:transform 0.3s,box-shadow 0.3s;"
+                    onmouseover="this.style.transform='translateY(-8px)';this.style.boxShadow='0 20px 40px rgba(0,245,255,0.12)'"
+                    onmouseout="this.style.transform='';this.style.boxShadow=''">
+                    <!-- <div
+                            style="width:110px;height:110px;border-radius:50%;overflow:hidden;border:3px solid var(--cyan);box-shadow:0 0 20px var(--cyan-glow);margin:0 auto 20px;background:rgba(0,245,255,0.05);">
+                            <img src="{{ url_for('static', filename='logos/principal.jpg') }}"
+                                onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\'font-size:3rem;line-height:110px;\'></span>'"
+                                alt="Principal" style="width:100%;height:100%;object-fit:cover;">
+                        </div>-->
+                    <div
+                        style="font-size:0.7rem;color:var(--cyan);letter-spacing:3px;font-weight:600;margin-bottom:6px;">
+                        PATRON</div>
+                    <div
+                        style="font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--text);letter-spacing:1px;margin-bottom:4px;">
+                        Dr. Srinivasan Alavandar</div>
+                    <div style="font-size:0.82rem;color:var(--muted);">Principal</div>
+                    <div style="font-size:0.78rem;color:var(--muted);margin-top:2px;">Agni College of Technology
+                    </div>
+                </div>
+                <!-- DEAN ACADEMICS -->
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:36px 28px;text-align:center;width:260px;transition:transform 0.3s,box-shadow 0.3s;"
+                    onmouseover="this.style.transform='translateY(-8px)';this.style.boxShadow='0 20px 40px rgba(168,85,247,0.12)'"
+                    onmouseout="this.style.transform='';this.style.boxShadow=''">
+                    <!-- <div
+                            style="width:110px;height:110px;border-radius:50%;overflow:hidden;border:3px solid #a855f7;box-shadow:0 0 20px rgba(168,85,247,0.3);margin:0 auto 20px;background:rgba(168,85,247,0.05);">
+                            <img src="{{ url_for('static', filename='logos/hod.jpg') }}"
+                                onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\'font-size:3rem;line-height:110px;\'></span>'"
+                                alt="Dean Academics" style="width:100%;height:100%;object-fit:cover;">
+                        </div>-->
+                    <div style="font-size:0.7rem;color:#a855f7;letter-spacing:3px;font-weight:600;margin-bottom:6px;">
+                        CONVENOR</div>
+                    <div
+                        style="font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--text);letter-spacing:1px;margin-bottom:4px;">
+                        Dr.T Anand</div>
+                    <div style="font-size:0.82rem;color:var(--muted);">Dean Academics</div>
+                    <div style="font-size:0.78rem;color:var(--muted);margin-top:2px;">Agni College of Technology
+                    </div>
+                </div>
+                <!-- DEAN -->
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:36px 28px;text-align:center;width:260px;transition:transform 0.3s,box-shadow 0.3s;"
+                    onmouseover="this.style.transform='translateY(-8px)';this.style.boxShadow='0 20px 40px rgba(168,85,247,0.12)'"
+                    onmouseout="this.style.transform='';this.style.boxShadow=''">
+                    <!-- <div
+                            style="width:110px;height:110px;border-radius:50%;overflow:hidden;border:3px solid #a855f7;box-shadow:0 0 20px rgba(168,85,247,0.3);margin:0 auto 20px;background:rgba(168,85,247,0.05);">
+                            <img src="{{ url_for('static', filename='logos/hod.jpg') }}"
+                                onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\'font-size:3rem;line-height:110px;\'></span>'"
+                                alt="Dean Administration" style="width:100%;height:100%;object-fit:cover;">
+                        </div>-->
+                    <div style="font-size:0.7rem;color:#a855f7;letter-spacing:3px;font-weight:600;margin-bottom:6px;">
+                        CONVENOR</div>
+                    <div
+                        style="font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--text);letter-spacing:1px;margin-bottom:4px;">
+                        Dr.A Kalaimurugan</div>
+                    <div style="font-size:0.82rem;color:var(--muted);">Dean Administration</div>
+                    <div style="font-size:0.78rem;color:var(--muted);margin-top:2px;">Agni College of Technology
+                    </div>
+                </div>
+
+                <!-- HOD -->
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:36px 28px;text-align:center;width:260px;transition:transform 0.3s,box-shadow 0.3s;"
+                    onmouseover="this.style.transform='translateY(-8px)';this.style.boxShadow='0 20px 40px rgba(0,245,255,0.12)'"
+                    onmouseout="this.style.transform='';this.style.boxShadow=''">
+                    <!-- <div
+                            style="width:110px;height:110px;border-radius:50%;overflow:hidden;border:3px solid var(--cyan);box-shadow:0 0 20px var(--cyan-glow);margin:0 auto 20px;background:rgba(0,245,255,0.05);">
+                            <img src="{{ url_for('static', filename='logos/principal.jpg') }}"
+                                onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\'font-size:3rem;line-height:110px;\'></span>'"
+                                alt="HOD" style="width:100%;height:100%;object-fit:cover;">
+                        </div>-->
+                    <div
+                        style="font-size:0.7rem;color:var(--cyan);letter-spacing:3px;font-weight:600;margin-bottom:6px;">
+                        CONVENOR</div>
+                    <div
+                        style="font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--text);letter-spacing:1px;margin-bottom:4px;">
+                        Dr. Balaji Madhavan</div>
+                    <div style="font-size:0.82rem;color:var(--muted);">Head of Department-CSE</div>
+                    <div style="font-size:0.78rem;color:var(--muted);margin-top:2px;">Agni College of Technology
+                    </div>
+                </div>
+
+            </div>
+        </section>
+        <section id="faq" style="padding: 100px 5%; position: relative; z-index: 10;">
+            <div style="text-align: center; margin-bottom: 60px;">
+                <div
+                    style="font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 6px; color: var(--pri); text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 14px;">
+                    :: GOT QUESTIONS? ::
+                </div>
+                <h2
+                    style="font-family: 'Chakra Petch', sans-serif; font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 700; color: #fff; line-height: 1.1;">
+                    Frequently Asked <span
+                        style="background: linear-gradient(135deg, #c4b5fd, #a78bfa, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 16px rgba(167,139,250,0.6));">Questions</span>
+                </h2>
+            </div>
+
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; max-width: 1000px; margin: 0 auto;">
+
+                <!-- FAQ Item -->
+                <div class="faq-item">
+                    <button class="faq-toggle">Who can participate in TECHXORA '26? <span
+                            class="faq-icon">+</span></button>
+                    <div class="faq-content">
+                        <p>Any college student pursuing Engineering can participate. You must have a valid student
+                            ID
+                            card from your institution to register.</p>
+                    </div>
+                </div>
+                <!-- FAQ Item -->
+                <div class="faq-item">
+                    <button class="faq-toggle">What is the team size? <span class="faq-icon">+</span></button>
+                    <div class="faq-content">
+                        <p>Teams must consist of 2 to 4 members. We encourage cross-disciplinary teams to bring
+                            diverse perspectives to the problem statements.</p>
+                    </div>
+                </div>
+                <!-- FAQ Item -->
+                <div class="faq-item">
+                    <button class="faq-toggle">Is there a registration fee? <span class="faq-icon">+</span></button>
+                    <div class="faq-content">
+                        <p>Registration is 300 per person</p>
+                    </div>
+                </div>
+                <!-- FAQ Item -->
+                <div class="faq-item">
+                    <button class="faq-toggle">Do I need an idea before registering? <span
+                            class="faq-icon">+</span></button>
+                    <div class="faq-content">
+                        <p>Not necessarily! You can choose from our 9 predefined problem statements spanning 5
+                            domains. Bring your skills; the problems await.</p>
+                    </div>
+                </div>
+                <!-- FAQ Item -->
+                <div class="faq-item">
+                    <button class="faq-toggle">What should I bring on the day? <span class="faq-icon">+</span></button>
+                    <div class="faq-content">
+                        <p>Bring your laptops, chargers, student IDs and a competitive
+                            spirit. We will provide Wi-Fi, power, food, and workspace.</p>
+                    </div>
+                </div>
+                <!-- FAQ Item -->
+                <div class="faq-item">
+                    <button class="faq-toggle">How will projects be judged? <span class="faq-icon">+</span></button>
+                    <div class="faq-content">
+                        <p>Projects are evaluated on innovation, technical complexity, functional completeness,
+                            presentation, and real-world applicability.</p>
+                    </div>
+                </div>
+                <!-- FAQ Item -->
+                <div class="faq-item">
+                    <button class="faq-toggle">Is accommodation provided? <span class="faq-icon">+</span></button>
+                    <div class="faq-content">
+                        <p>Yes, resting areas for boys and girls will be provided on campus during the
+                            24-hour event period.</p>
+                    </div>
+                </div>
+                <!-- FAQ Item -->
+                <div class="faq-item">
+                    <button class="faq-toggle">Can we use AI tools or open-source libraries? <span
+                            class="faq-icon">+</span></button>
+                    <div class="faq-content">
+                        <p>Yes, but all use of libraries or AI assistants must be declared during the evaluation.
+                            The core logic and implementation must be built during the hackathon.</p>
+                    </div>
+                </div>
+                <!-- FAQ Item -->
+                <div class="faq-item">
+                    <button class="faq-toggle">Required items for hardware solutions will provide by College?<span
+                            class="faq-icon">+</span></button>
+                    <div class="faq-content">
+                        <p>No,the participants should bring your own hardware requirements.</p>
+                    </div>
+                </div>
+                <!-- FAQ Item -->
+                <div class="faq-item">
+                    <button class="faq-toggle">Is foods are provided? <span class="faq-icon">+</span></button>
+                    <div class="faq-content">
+                        <p>Yes,foods will be provided.</p>
+                    </div>
+                </div>
+            </div>
+
+            <style>
+                .faq-item {
+                    border: 1px solid var(--border);
+                    border-radius: 12px;
+                    background: rgba(10, 8, 22, 0.4);
+                    overflow: hidden;
+                    transition: border-color 0.3s;
+                }
+
+                .faq-item:hover {
+                    border-color: rgba(167, 139, 250, 0.3);
+                }
+
+                .faq-toggle {
+                    width: 100%;
+                    padding: 20px 24px;
+                    background: transparent;
+                    border: none;
+                    text-align: left;
+                    color: #fff;
+                    font-family: 'Chakra Petch', sans-serif;
+                    font-size: 1.05rem;
+                    font-weight: 600;
+                    cursor: none;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    transition: color 0.3s;
+                }
+
+                .faq-toggle:hover {
+                    color: var(--pri);
+                }
+
+                .faq-icon {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 24px;
+                    height: 24px;
+                    border: 1px solid rgba(167, 139, 250, 0.3);
+                    border-radius: 50%;
+                    font-family: monospace;
+                    font-size: 14px;
+                    color: var(--pri);
+                    transition: transform 0.3s, background 0.3s;
+                }
+
+                .faq-toggle.active .faq-icon {
+                    transform: rotate(45deg);
+                    background: rgba(167, 139, 250, 0.1);
+                }
+
+                .faq-content {
+                    max-height: 0;
+                    overflow: hidden;
+                    transition: max-height 0.4s ease-out;
+                }
+
+                .faq-content p {
+                    padding: 0 24px 24px;
+                    color: rgba(220, 210, 255, 0.6);
+                    font-size: 0.95rem;
+                    line-height: 1.6;
+                    margin: 0;
+                }
+            </style>
+        </section>
+    </main>
+
+    <!-- ══════════════════════════════════════════
+         STUDENT COORDINATORS
+    ══════════════════════════════════════════ -->
+    <section id="contact"
+        style="position:relative;z-index:10;padding:80px 5% 60px;background:linear-gradient(180deg,transparent,rgba(0,0,0,0.4),transparent);">
+        <style>
+            .coord-card {
+                flex: 1;
+                min-width: 260px;
+                max-width: 320px;
+                background: rgba(15, 10, 30, 0.7);
+                border: 1px solid rgba(167, 139, 250, 0.2);
+                border-radius: 18px;
+                padding: 32px 28px;
+                text-align: center;
+                backdrop-filter: blur(12px);
+                position: relative;
+                overflow: hidden;
+                transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+            }
+
+            .coord-card::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(135deg, rgba(167, 139, 250, 0.05), transparent);
+                pointer-events: none;
+            }
+
+            .coord-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 20px 50px rgba(167, 139, 250, 0.2);
+                border-color: rgba(167, 139, 250, 0.5);
+            }
+
+            .coord-avatar {
+                width: 72px;
+                height: 72px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, rgba(167, 139, 250, 0.3), rgba(129, 140, 248, 0.2));
+                border: 2px solid rgba(167, 139, 250, 0.4);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.8rem;
+                margin: 0 auto 16px;
+                box-shadow: 0 0 20px rgba(167, 139, 250, 0.3);
+            }
+
+            .coord-name {
+                font-family: 'Chakra Petch', sans-serif;
+                font-size: 1.15rem;
+                font-weight: 700;
+                color: #fff;
+                margin-bottom: 10px;
+                letter-spacing: 1px;
+            }
+
+            .coord-phone {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                font-family: 'Space Mono', monospace;
+                font-size: 0.95rem;
+                color: var(--cyan);
+                text-decoration: none;
+                padding: 8px 18px;
+                border: 1px solid rgba(0, 245, 255, 0.25);
+                border-radius: 50px;
+                transition: all 0.3s;
+            }
+
+            .coord-phone:hover {
+                background: rgba(0, 245, 255, 0.1);
+                border-color: rgba(0, 245, 255, 0.6);
+                box-shadow: 0 0 18px rgba(0, 245, 255, 0.25);
+            }
+        </style>
+
+
+
+        <footer id="contact"
+            style="position:relative;z-index:10;background:rgba(7,5,15,0.95);padding:60px 5% 40px;border-top:1px solid rgba(167,139,250,0.1);">
+
+            <div
+                style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: stretch; max-width: 1200px; margin: 0 auto; gap: 40px;">
+
+                <!-- Left Info -->
+                <div style="flex: 1; min-width: 300px; text-align: left;">
+                    <div
+                        style="font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;letter-spacing:3px;color:var(--pri);margin-bottom: 10px;">
+                        TECHXORA<span style="color:var(--sec)">'26</span></div>
+                    <div
+                        style="font-family:'Space Mono',monospace;font-size:0.85rem;letter-spacing:2px;color:var(--dim);margin-bottom: 20px;">
+                        The 24-Hour National Level Hackathon</div>
+
+                    <div
+                        style="display: flex; gap: 15px; margin-bottom: 25px; color: rgba(220, 210, 255, 0.7); font-size: 0.95rem;">
+                        <span style="font-size: 1.2rem; color: var(--sec);">📍</span>
+                        <div>
+                            <strong
+                                style="color: #fff; font-family: 'Chakra Petch', sans-serif; font-size: 1.1rem;">Agni
+                                College of Technology</strong><br>
+                            OMR, Thalambur,<br>
+                            Chennai, Tamil Nadu 600130
+                        </div>
+                    </div>
+
+                    <div
+                        style="font-family:'Space Mono',monospace;font-size:0.75rem;color:rgba(167,139,250,0.4);letter-spacing:1px; margin-bottom: 8px;">
+                        © 2026 TECHXORA Management System <br> Agni College of Technology
+                    </div>
+                </div>
+
+                <!-- Right Map -->
+                <div style="flex: 1; min-width: 300px; max-width: 500px; width: 100%;">
+                    <div
+                        style="border-radius: 16px; overflow: hidden; border: 1px solid rgba(167,139,250,0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative;">
+                        <div
+                            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(167,139,250,0.1); pointer-events: none; z-index: 2;">
+                        </div>
+                        <iframe
+                            src="https://maps.google.com/maps?q=Agni%20College%20of%20Technology,%20Chennai&t=k&z=15&ie=UTF8&iwloc=&output=embed"
+                            width="100%" height="250"
+                            style="border:0; display: block; filter: contrast(1.1) saturate(1.2);" allowfullscreen=""
+                            loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
+                </div>
+
+                <div
+                    style="width: 100%; margin-top: 20px; padding-top: 24px; border-top: 1px solid rgba(167,139,250,0.12); text-align: center; display: flex; flex-direction: column; align-items: center;">
+                    <div
+                        style="font-family:'Space Mono',monospace;font-size:0.65rem;letter-spacing:4px;text-transform:uppercase;margin-bottom:16px;background:linear-gradient(90deg,#a78bfa,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+                        Developed By
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;">
+
+                        <span
+                            style="font-family:'Orbitron',monospace;font-size:0.75rem;font-weight:700;padding:7px 16px;background:linear-gradient(135deg,rgba(167,139,250,0.18),rgba(167,139,250,0.05));border:1px solid rgba(167,139,250,0.5);border-radius:8px;color:#c4b5fd;letter-spacing:2px;box-shadow:0 0 16px rgba(167,139,250,0.2),inset 0 0 8px rgba(167,139,250,0.05);">SAM
+                            PRINCE ABRAHAM S</span>
+                        <span style="color:rgba(167,139,250,0.3);font-size:1rem;">·</span>
+                        <span
+                            style="font-family:'Orbitron',monospace;font-size:0.75rem;font-weight:700;padding:7px 16px;background:linear-gradient(135deg,rgba(52,211,153,0.18),rgba(52,211,153,0.05));border:1px solid rgba(52,211,153,0.5);border-radius:8px;color:#34d399;letter-spacing:2px;box-shadow:0 0 16px rgba(52,211,153,0.2),inset 0 0 8px rgba(52,211,153,0.05);">TAMILSELVA
+                            S</span>
+                        <span style="color:rgba(167,139,250,0.3);font-size:1rem;">·</span>
+                        <span
+                            style="font-family:'Orbitron',monospace;font-size:0.75rem;font-weight:700;padding:7px 16px;background:linear-gradient(135deg,rgba(251,191,36,0.18),rgba(251,191,36,0.05));border:1px solid rgba(251,191,36,0.5);border-radius:8px;color:#fbbf24;letter-spacing:2px;box-shadow:0 0 16px rgba(251,191,36,0.2),inset 0 0 8px rgba(251,191,36,0.05);">SHAKTHI
+                            SHIVA MURUGAN AR</span>
+                    </div>
+                </div>
+
+            </div>
+        </footer>
+
+        <script>
+            /* ══════════════════════════════════
+               BACKGROUND ENGINE
+            ══════════════════════════════════ */
+            const canvas = document.getElementById('bgCanvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                let W, H;
+                function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+                resize(); window.addEventListener('resize', resize);
+                const BG = '#07050f';
+
+                /* 1. STARS */
+                const STARS = Array.from({ length: 220 }, () => ({ x: Math.random(), y: Math.random(), r: .15 + Math.random() * 1.2, a: .08 + Math.random() * .5, ph: Math.random() * Math.PI * 2, spd: .0003 + Math.random() * .0008, hue: Math.random() < .08 ? 'gold' : Math.random() < .1 ? 'blue' : 'pri' }));
+                function drawStars(t) { for (const s of STARS) { const p = .6 + .4 * Math.sin(t * s.spd + s.ph); ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2); ctx.fillStyle = s.hue === 'gold' ? `rgba(253,224,120,${s.a * p})` : s.hue === 'blue' ? `rgba(147,210,248,${s.a * p})` : `rgba(200,190,255,${s.a * p})`; ctx.fill(); } }
+
+                /* 2. NEBULA */
+                const BLOBS = [{ x: .2, y: .3, r: .5, c: '120,80,220', ph: 0, spd: .00022 }, { x: .78, y: .18, r: .42, c: '80,60,200', ph: 2.1, spd: .00018 }, { x: .55, y: .72, r: .38, c: '160,100,255', ph: 4.5, spd: .0003 }, { x: .88, y: .65, r: .34, c: '200,140,40', ph: 1.4, spd: .00025 }];
+                function drawNebula(t) { for (const b of BLOBS) { const ox = Math.sin(t * b.spd + b.ph) * .1, oy = Math.cos(t * b.spd * .7 + b.ph) * .09; const cx = (b.x + ox) * W, cy = (b.y + oy) * H, r = b.r * Math.max(W, H); const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, `rgba(${b.c},0.10)`); g.addColorStop(.5, `rgba(${b.c},0.03)`); g.addColorStop(1, `rgba(${b.c},0)`); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); } }
+
+                /* 3. GRID */
+                const GRID = { horizon: .5, cols: 22, rows: 18, spd: .14, offset: 0 };
+                function drawGrid(dt) { GRID.offset += GRID.spd * dt * .001; const hy = H * GRID.horizon, vp = { x: W / 2, y: hy }, L = -W * .5, R = W * 1.5; const bg = ctx.createRadialGradient(W / 2, H * .85, 0, W / 2, H * .5, W * .75); bg.addColorStop(0, 'rgba(120,80,220,0.06)'); bg.addColorStop(1, 'transparent'); ctx.fillStyle = bg; ctx.fillRect(0, hy, W, H - hy); ctx.save(); for (let c = 0; c <= GRID.cols; c++) { const fx = L + (R - L) * (c / GRID.cols); ctx.beginPath(); ctx.moveTo(vp.x + (fx - vp.x) * .001, hy); ctx.lineTo(fx, H + 20); ctx.strokeStyle = 'rgba(120,80,220,0.13)'; ctx.lineWidth = .7; ctx.shadowBlur = 5; ctx.shadowColor = 'rgba(167,139,250,.6)'; ctx.stroke(); } const off = GRID.offset % 1; for (let r = 0; r <= GRID.rows; r++) { const rn = (r + off) / GRID.rows, rp = Math.pow(rn, 2.5); const y = hy + (H - hy + 60) * rp; const xL = vp.x + (L - vp.x) * rn, xR = vp.x + (R - vp.x) * rn; ctx.strokeStyle = `rgba(120,80,220,${.02 + .18 * rp})`; ctx.lineWidth = .6; ctx.shadowBlur = 0; ctx.beginPath(); ctx.moveTo(xL, y); ctx.lineTo(xR, y); ctx.stroke(); } ctx.restore(); }
+
+                /* 4. CSE KEYWORD RAIN */
+                const CSE_WORDS = ['Python', 'Java', 'C++', 'HTML', 'CSS', 'React', 'Node.js', 'Linux', 'SQL', 'API', 'Git', 'ML', 'AI', 'DSA', 'OS', 'DBMS', 'CN', 'OOP', 'Array', 'Stack', 'Queue', 'Tree', 'Graph', 'if(){}', 'for()', 'while', 'class', 'void', 'int', 'float', 'bool', 'const', 'let', '0x1F', 'NaN', 'null', 'async', 'CPU', 'RAM', 'ROM', 'GPU', 'ALU', 'TCP', 'UDP', 'HTTP', 'DNS', 'SSH', 'Hash', 'Sort', 'BFS', 'DFS', 'DP', '#define', 'printf', 'malloc', 'free', 'new', 'delete', 'push()', 'pop()', 'map()', 'filter()', 'import', 'export', 'yield', 'return', 'typedef', 'struct', 'enum'];
+                const RAIN_COLS = [];
+                function initRain() { const count = Math.ceil(W / 92); for (let c = 0; c < count; c++) { if (Math.random() > .4) continue; RAIN_COLS.push({ x: c * 92 + Math.random() * 92, y: Math.random() * -H, speed: .5 + Math.random() * 1.2, words: [], len: 4 + ~~(Math.random() * 9), timer: 0, iv: 28 + Math.random() * 38, type: Math.random() < .15 ? 'gold' : Math.random() < .12 ? 'blue' : 'pri' }); } }
+                initRain();
+                function drawRain() { ctx.font = '600 11px "Space Mono",monospace'; for (const s of RAIN_COLS) { if (++s.timer >= s.iv) { s.timer = 0; s.words.unshift(CSE_WORDS[~~(Math.random() * CSE_WORDS.length)]); if (s.words.length > s.len) s.words.pop(); } s.y += s.speed; if (s.y > H + s.len * 22) { s.y = -s.len * 22; s.x = Math.random() * W; } s.words.forEach((w, i) => { const cy = s.y - i * 22; if (cy < -20 || cy > H + 20) return; let r, g, b; if (s.type === 'gold') { r = 245; g = 200; b = 50; } else if (s.type === 'blue') { r = 56; g = 189; b = 248; } else { r = 167; g = 139; b = 250; } const al = i === 0 ? .92 : Math.max(0, .58 - i * (.58 / s.len)); if (i === 0) { ctx.fillStyle = `rgba(240,235,255,${al})`; ctx.shadowBlur = 10; ctx.shadowColor = `rgba(${r},${g},${b},.8)`; } else { ctx.fillStyle = `rgba(${r},${g},${b},${al * .5})`; ctx.shadowBlur = 0; } ctx.fillText(w, s.x, cy); }); ctx.shadowBlur = 0; } }
+
+                /* 5. PARTICLES */
+                const PARTS = []; for (let i = 0; i < 80; i++)PARTS.push({ x: Math.random() * 9999, y: Math.random() * 9999, vx: (Math.random() - .5) * .28, vy: (Math.random() - .5) * .28, r: .7 + Math.random() * 2, a: .25 + Math.random() * .65, type: Math.random() < .12 ? 'gold' : Math.random() < .12 ? 'blue' : 'pri', ph: Math.random() * Math.PI * 2 });
+                const CD = 115;
+                function drawParticles(t) { for (let i = 0; i < PARTS.length; i++) { const a = PARTS[i]; a.x += a.vx; a.y += a.vy; if (a.x < 0) a.x = W; if (a.x > W) a.x = 0; if (a.y < 0) a.y = H; if (a.y > H) a.y = 0; for (let j = i + 1; j < PARTS.length; j++) { const b = PARTS[j]; const dx = a.x - b.x, dy = a.y - b.y, d = Math.sqrt(dx * dx + dy * dy); if (d < CD) { ctx.beginPath(); ctx.strokeStyle = `rgba(120,80,220,${(1 - d / CD) * .12})`; ctx.lineWidth = .5; ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); } } const p = .7 + .3 * Math.sin(t * .002 + a.ph); const col = a.type === 'gold' ? '245,200,50' : a.type === 'blue' ? '56,189,248' : '167,139,250'; const g2 = ctx.createRadialGradient(a.x, a.y, 0, a.x, a.y, a.r * 5); g2.addColorStop(0, `rgba(${col},${a.a * p})`); g2.addColorStop(1, 'transparent'); ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(a.x, a.y, a.r * 5, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.arc(a.x, a.y, a.r * p, 0, Math.PI * 2); ctx.fillStyle = `rgba(${col},${a.a})`; ctx.shadowBlur = 8; ctx.shadowColor = `rgba(${col},.7)`; ctx.fill(); ctx.shadowBlur = 0; } }
+
+                /* 6. PULSE RINGS */
+                const RINGS = []; function spawnRing() { RINGS.push({ x: W * (.1 + Math.random() * .8), y: H * (.1 + Math.random() * .8), r: 0, maxR: 90 + Math.random() * 240, spd: .65 + Math.random() * 1.1, type: Math.random() < .2 ? 'gold' : Math.random() < .15 ? 'blue' : 'pri' }); }
+                setInterval(spawnRing, 1700); spawnRing(); spawnRing();
+                function drawRings() { for (let i = RINGS.length - 1; i >= 0; i--) { const r = RINGS[i]; r.r += r.spd; const al = (1 - r.r / r.maxR) * .28; if (al <= 0) { RINGS.splice(i, 1); continue; } const col = r.type === 'gold' ? '245,200,50' : r.type === 'blue' ? '56,189,248' : '167,139,250'; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.strokeStyle = `rgba(${col},${al})`; ctx.lineWidth = 1.4; ctx.shadowBlur = 14; ctx.shadowColor = `rgba(${col},.6)`; ctx.stroke(); ctx.shadowBlur = 0; } }
+
+                /* 7. YELLOW LIGHTNING */
+                const BOLTS = []; function spawnBolt() { const bx = W * (.05 + Math.random() * .9); const segs = []; let cx = bx, cy = 0; const steps = 8 + ~~(Math.random() * 5); for (let i = 0; i < steps; i++) { const ny = cy + H / steps + (Math.random() - .5) * 55; const nx = cx + (Math.random() - .5) * 110; segs.push({ x1: cx, y1: cy, x2: nx, y2: ny }); if (Math.random() < .35 && i > 1) { let bx2 = nx, by2 = ny; for (let k = 0; k < 3; k++) { const bny = by2 + (H / steps * .55) + (Math.random() - .5) * 45; const bnx = bx2 + (Math.random() - .5) * 75; segs.push({ x1: bx2, y1: by2, x2: bnx, y2: bny }); bx2 = bnx; by2 = bny; } } cx = nx; cy = ny; } BOLTS.push({ life: 0, maxLife: 26, segs }); }
+                setInterval(() => { if (Math.random() < .45) spawnBolt(); }, 2600);
+                function drawLightning() { for (let i = BOLTS.length - 1; i >= 0; i--) { const b = BOLTS[i]; b.life++; if (b.life > b.maxLife) { BOLTS.splice(i, 1); continue; } const fade = Math.max(0, 1 - b.life / b.maxLife); const rampUp = b.life < 4 ? b.life / 4 : 1; const al = fade * rampUp; ctx.lineWidth = 5; ctx.strokeStyle = `rgba(255,165,0,${al * .3})`; ctx.shadowBlur = 0; b.segs.forEach(s => { ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke(); }); ctx.lineWidth = 2; ctx.strokeStyle = `rgba(255,230,0,${al * .75})`; ctx.shadowBlur = 20; ctx.shadowColor = 'rgba(255,220,0,0.9)'; b.segs.forEach(s => { ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke(); }); ctx.lineWidth = 1; ctx.strokeStyle = `rgba(255,252,200,${al * 0.95})`; ctx.shadowBlur = 28; ctx.shadowColor = 'rgba(255,240,100,1)'; b.segs.forEach(s => { ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke(); }); ctx.shadowBlur = 0; } }
+
+                /* RENDER LOOP */
+                let last = 0;
+                function loop(t) { const dt = Math.min(t - last, 50); last = t; ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H); drawNebula(t); drawStars(t); drawGrid(dt); drawRain(); drawParticles(t); drawRings(); drawLightning(); requestAnimationFrame(loop); }
+                requestAnimationFrame(loop);
+            }
+
+            /* CURSOR */
+            const cur = document.getElementById('cur'), ring = document.getElementById('cur-ring');
+            if (cur && ring) {
+                let mx = 0, my = 0, rx = 0, ry = 0;
+                document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+                (function cl() { rx += (mx - rx) * .12; ry += (my - ry) * .12; cur.style.left = (mx - 5) + 'px'; cur.style.top = (my - 5) + 'px'; ring.style.left = (rx - 17) + 'px'; ring.style.top = (ry - 17) + 'px'; requestAnimationFrame(cl); })();
+            }
+
+            // Stats Fetching
+            async function updateStats() {
+                try {
+                    const res = await fetch('/api/stats');
+                    const data = await res.json();
+                    document.getElementById('st-total').innerText = data.total;
+                    document.getElementById('st-inside').innerText = data.inside;
+                    document.getElementById('st-food').innerText = data.food;
+                    document.getElementById('st-events').innerText = data.events;
+                } catch (e) { }
+            }
+            updateStats();
+            setInterval(updateStats, 10000);
+
+            // Countdown Timer
+            const TARGET = new Date('2026-03-17T10:00:00');
+            function tick() {
+                const diff = TARGET - new Date();
+                if (diff <= 0) {
+                    ['cd-d', 'cd-h', 'cd-m', 'cd-s'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '00'; });
+                    return;
+                }
+                const fmt = n => String(n).padStart(2, '0');
+                const dEl = document.getElementById('cd-d'), hEl = document.getElementById('cd-h'), mEl = document.getElementById('cd-m'), sEl = document.getElementById('cd-s');
+                if (dEl) dEl.textContent = fmt(Math.floor(diff / 864e5));
+                if (hEl) hEl.textContent = fmt(Math.floor((diff % 864e5) / 36e5));
+                if (mEl) mEl.textContent = fmt(Math.floor((diff % 36e5) / 6e4));
+                if (sEl) sEl.textContent = fmt(Math.floor((diff % 6e4) / 1e3));
+            }
+            tick(); setInterval(tick, 1000);
+
+            // Nav active link based on scroll
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-links a');
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(sec => {
+                    const sectionTop = sec.offsetTop;
+                    if (scrollY >= sectionTop - 150) {
+                        current = sec.getAttribute('id');
+                    }
+                });
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${current}`) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+
+            // Side Login Toggle
+            const sideLogin = document.getElementById('sideLogin');
+            const toggleBtn = document.getElementById('loginToggle');
+            function toggleLogin() {
+                sideLogin.classList.toggle('open');
+                toggleBtn.classList.toggle('open');
+            }
+
+            // Add Team members
+            let memberCount = 1;
+            const maxMembers = 4;
+            const btnAddMember = document.getElementById('btnAddMember');
+            const membersContainer = document.getElementById('membersContainer');
+
+            if (btnAddMember) {
+                btnAddMember.addEventListener('click', () => {
+                    if (memberCount >= maxMembers) return;
+                    memberCount++;
+
+                    const memberHtml = `
+                    <div class="member-block" style="background: rgba(0,0,0,0.2); padding:20px; border-radius:8px; border:1px solid var(--border); margin-bottom:16px; animation: fadeInUp 0.3s ease;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                            <h3 style="color:var(--cyan); font-family:'Bebas Neue',cursive; letter-spacing:1px; margin:0;">MEMBER ${memberCount}</h3>
+                            <button type="button" style="background:none; border:none; color:var(--error); font-size:0.8rem; cursor:pointer;" onclick="this.closest('.member-block').remove(); memberCount--; checkMax();">Remove</button>
+                        </div>
+                        <div class="form-grid" style="margin-bottom:0;">
+                            <div class="form-group">
+                                <label>Full Name <span>*</span></label>
+                                <input type="text" name="name[]" class="form-control" placeholder="Full name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Email <span>*</span></label>
+                                <input type="email" name="email[]" class="form-control" placeholder="Email address" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Phone <span>*</span></label>
+                                <input type="tel" name="phone[]" class="form-control" placeholder="Phone number" required>
+                            </div>
+                            <div class="form-group">
+                                <label>College / Institution <span>*</span></label>
+                                <input type="text" name="college[]" class="form-control" placeholder="College name" required>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                    membersContainer.insertAdjacentHTML('beforeend', memberHtml);
+                    checkMax();
+                });
+
+                function checkMax() {
+                    if (memberCount >= maxMembers) {
+                        btnAddMember.style.display = 'none';
+                    } else {
+                        btnAddMember.style.display = 'inline-flex';
+                    }
+                }
+            }
+
+            // Domain-Based Problem Filtering
+            const domainSelect = document.getElementById('domainSelect');
+            const problemSelect = document.getElementById('problemSelect');
+            let problemOptions = [];
+            if (problemSelect) {
+                problemOptions = Array.from(problemSelect.querySelectorAll('option:not([value=""])'));
+            }
+
+            if (domainSelect && problemSelect) {
+                domainSelect.addEventListener('change', function () {
+                    const selectedDomain = this.value;
+
+                    // Clear existing selection
+                    problemSelect.value = "";
+
+                    // Filter options
+                    problemOptions.forEach(opt => {
+                        if (opt.getAttribute('data-domain') === selectedDomain) {
+                            opt.style.display = '';
+                        } else {
+                            opt.style.display = 'none';
+                        }
+                    });
+                });
+            }
+            // Problem Details Dynamic Fetching (Removed obsolete modal logic)
+
+            // ── Mobile hamburger menu ──────────────────────────
+            document.addEventListener('DOMContentLoaded', function () {
+                const btn = document.querySelector('.hamburger');
+                const navLinks = document.querySelector('.nav-links');
+                if (!btn || !navLinks) return;
+
+                btn.onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    navLinks.classList.toggle('open');
+                    btn.classList.toggle('open');
+                };
+
+                // Close menu when a link is clicked
+                navLinks.querySelectorAll('a').forEach(function (a) {
+                    a.onclick = function () {
+                        setTimeout(() => {
+                            navLinks.classList.remove('open');
+                            btn.classList.remove('open');
+                        }, 100);
+                    };
+                });
+
+                // Close on outside click
+                document.addEventListener('click', function (e) {
+                    if (!btn.contains(e.target) && !navLinks.contains(e.target)) {
+                        navLinks.classList.remove('open');
+                        btn.classList.remove('open');
+                    }
+                });
+            });
+
+            // Toggle Side Portal Login
+            function toggleLogin() {
+                const sideLogin = document.getElementById('sideLogin');
+                const toggleBtn = document.getElementById('loginToggle');
+                if (sideLogin) sideLogin.classList.toggle('open');
+                if (toggleBtn) toggleBtn.classList.toggle('open');
+            }
+
+            // ── FAQ Accordion
+            document.querySelectorAll('.faq-toggle').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    this.classList.toggle('active');
+                    const content = this.nextElementSibling;
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + "px";
+                    }
+                });
+            });
+
+
+            // ── Core Team Modal
+            const teamData = {
+                website: { name: 'Website Team', head: ['Sam Prince Abraham'], members: ['Shakthi SivaMurugan', 'Tamilselva'] },
+                design: { name: 'Design Team', head: ['Rithiga Shanmugam'], members: ['Mahathi L', 'Sanjay R', 'Ragav S', 'Mahanam Roshan', 'Aaruhya Kumar N'] },
+                registration: { name: 'Registration Team', head: ['Madhesh', 'Manikandan'], members: ['Janani', 'Aswini', 'Martina Blessy', 'sowndarya', 'Sharmila', 'Abinaya', 'Hemaridha', 'Juveriya Fathima'] },
+                technical: { name: 'Technical Team ', head: ['Tamilselva S', 'Sam Prince Abraham '], members: ['Rohit Bala', 'Sathyanesar'] },
+                mentors: { name: 'Student Mentors', head: ['Srinath', 'Malavika'], members: ['Dharshan Raj B', 'Shakthi Siva Murugan AR', 'Kamalapriya KU', 'Gokulakannan', 'Ranjith R', 'Kisshor N', 'Varsha RG', 'Chitralekha SKM', 'Niraimathi P', 'Dheena B', 'Kulothugan UG', 'Yashwanth G', 'Dhavaseelan A', 'Sathyanesar E'] },
+                marketing: { name: 'Marketing', head: ['Pending'], members: [] },
+                sponsorship: { name: 'Sponsorship', head: ['Sanjay R', 'Priyadharshini'], members: [] },
+                judging: { name: 'Judging Panel', head: ['Vishnu Karnan', 'Mahalakshmi Babu'], members: ['Anudharshini S', 'Tarun Kumar', 'Shubiisha J', 'Devasena S', 'Eesha B'] },
+                finance: { name: 'Finance', head: ['Arun'], members: [] },
+                food_venue: { name: 'Food & Venue', head: ['Sakthi S'], members: ['Vignesh V', 'Saran H', 'Rajesh M', 'Puthin M', 'Sanjai B', 'Thathapudi Blesson', 'Rokesh M'] }
+            };
+
+            function openTeamModal(deptKey) {
+                const data = teamData[deptKey];
+                if (!data) return;
+
+                // Move the modal overlay to the body to fix stacking context issues (e.g., hiding behind navbar)
+                const modal = document.getElementById('teamModalOverlay');
+                if (modal.parentElement !== document.body) {
+                    document.body.appendChild(modal);
+                }
+
+                document.getElementById('modalTeamName').innerText = data.name;
+
+                // Map each head to its own styled box
+                document.getElementById('modalTeamHead').innerHTML = data.head.map(h =>
+                    `<div style="font-size: 1.2rem; color: #fff; padding: 12px 18px; background: rgba(245,158,11,0.05); border-left: 3px solid var(--sec); border-radius: 4px; line-height: 1.6;">${h}</div>`
+                ).join('');
+
+                const ul = document.getElementById('modalTeamMembers');
+                ul.innerHTML = data.members.map(m => `<li style="padding: 10px 15px; background: rgba(167,139,250,0.05); border: 1px solid rgba(167,139,250,0.1); border-radius: 6px; color: rgba(220,210,255,0.8);">${m}</li>`).join('');
+
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                setTimeout(() => {
+                    modal.style.opacity = '1';
+                    document.getElementById('teamModalContent').style.transform = 'scale(1)';
+                }, 10);
+            }
+
+            function closeTeamModal() {
+                const modal = document.getElementById('teamModalOverlay');
+                modal.style.opacity = '0';
+                document.getElementById('teamModalContent').style.transform = 'scale(0.9)';
+                setTimeout(() => { modal.style.display = 'none'; document.body.style.overflow = ''; }, 300);
+            }
+
+            // Close on overlay click (outside modal box)
+            document.getElementById('teamModalOverlay').addEventListener('click', function (e) {
+                if (e.target === this) closeTeamModal();
+            });
+
+            // Close on Escape key
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    if (document.getElementById('teamModalOverlay').style.display === 'flex') closeTeamModal();
+                }
+            });
+        </script>
+
+        <!-- ══ CENTERED PROBLEM MODAL ══ -->
+        <div id="ps-modal-overlay" onclick="closePsModal(event)" style="
+        display:none; position:fixed; inset:0; z-index:9000;
+        background:rgba(7,5,15,0.88); backdrop-filter:blur(16px);
+        justify-content:center; align-items:center; padding:24px;
+        opacity:0; transition:opacity .3s ease;">
+            <div id="ps-modal-box" onclick="event.stopPropagation()" style="
+            width:100%; max-width:820px; max-height:88vh;
+            background:linear-gradient(135deg,rgba(18,14,36,0.99),rgba(14,10,28,0.99));
+            border:1px solid rgba(167,139,250,0.22); border-radius:8px;
+            overflow-y:auto; position:relative;
+            transform:scale(0.93) translateY(24px);
+            transition:transform .35s cubic-bezier(.22,1,.36,1);
+            scrollbar-width:thin; scrollbar-color:rgba(167,139,250,0.3) transparent;">
+
+                <!-- Modal Header -->
+                <div style="padding:28px 32px 20px; border-bottom:1px solid rgba(167,139,250,0.1);
+                        display:flex; align-items:flex-start; justify-content:space-between; gap:20px;
+                        position:sticky; top:0; z-index:10; background:rgba(14,10,28,0.95); backdrop-filter:blur(8px);
+                        border-radius:8px 8px 0 0;">
+                    <div>
+                        <div id="ps-modal-eyebrow"
+                            style="font-family:'Space Mono',monospace; font-size:9px;
+                        letter-spacing:4px; color:rgba(167,139,250,0.45); text-transform:uppercase; margin-bottom:8px;"></div>
+                        <div id="ps-modal-title" style="font-family:'Chakra Petch',sans-serif;
+                        font-weight:700; font-size:clamp(18px,3vw,28px); color:#fff;"></div>
+                    </div>
+                    <button onclick="closePsModalBtn()" style="
+                    width:36px; height:36px; flex-shrink:0;
+                    border:1px solid rgba(167,139,250,0.4); border-radius:50%;
+                    background:rgba(167,139,250,0.1); color:#fff; cursor:pointer;
+                    font-size:20px; display:flex; align-items:center; justify-content:center;
+                    transition:all .3s; line-height: 1;"
+                        onmouseover="this.style.background='rgba(167,139,250,0.4)';this.style.transform='scale(1.1)';"
+                        onmouseout="this.style.background='rgba(167,139,250,0.1)';this.style.transform='scale(1)';">&times;</button>
+                </div>
+
+                <!-- Modal Body -->
+                <div id="ps-modal-body" style="padding:24px 32px 32px;"></div>
+            </div>
+        </div>
+</body>
+
+</html>

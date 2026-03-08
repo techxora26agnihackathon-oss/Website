@@ -1,0 +1,452 @@
+{% extends "base.html" %}
+{% block title %}Volunteer Scanner{% endblock %}
+{% block page_title %}🙋 Volunteer Scanner{% endblock %}
+
+{% block extra_head %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 400px;gap:24px;max-width:1100px">
+
+    <!-- Scanner Panels -->
+    <div style="display:flex;flex-direction:column;gap:20px">
+
+        <!-- ── Entry / Exit Scanner ─────────────────────────────── -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">🔄 Entry / Exit Scanner</div>
+                <span class="badge badge-system" style="font-size:0.68rem">Auto-Detect Mode</span>
+            </div>
+            <div class="card-body">
+                <div style="padding:10px 14px;margin-bottom:16px;border-radius:8px;
+                    background:rgba(0,245,255,0.05);border:1px solid rgba(0,245,255,0.12);
+                    font-size:0.82rem;color:var(--text-secondary);line-height:1.5">
+                    ⚡ <strong>Smart scan:</strong>
+                    If participant is <span style="color:var(--neon-red);font-weight:600">outside</span> → marks
+                    <strong>Entry</strong>.
+                    If <span style="color:var(--neon-green);font-weight:600">inside</span> → marks
+                    <strong>Exit</strong>. No mode selection needed.
+                </div>
+
+                <!-- Camera + Manual row -->
+                <div style="display:flex;gap:10px;margin-bottom:12px">
+                    <button type="button" class="btn btn-purple" style="flex-shrink:0" onclick="openCamera('toggle')">
+                        📷 Open Camera
+                    </button>
+                    <div style="flex:1;color:var(--text-muted);font-size:0.8rem;display:flex;align-items:center">
+                        or type ID manually below
+                    </div>
+                </div>
+
+                <form id="toggle-form">
+                    <div class="scanner-input-wrap">
+                        <span class="scan-icon">📲</span>
+                        <input type="text" id="toggle-uid" class="form-control scanner-input" placeholder="HF-0001"
+                            autocomplete="off" autocapitalize="characters" style="flex:1" />
+                        <button type="submit" class="btn btn-primary">Scan →</button>
+                    </div>
+                </form>
+
+                <div class="scanner-result" id="toggle-result"></div>
+            </div>
+        </div>
+
+        <!-- ── Food Scanner ──────────────────────────────────────── -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">🍽️ Food Distribution Scanner</div>
+                <span class="badge badge-food" style="font-size:0.68rem">One Token Per Participant</span>
+            </div>
+            <div class="card-body">
+                <div style="padding:10px 14px;margin-bottom:16px;border-radius:8px;
+                    background:rgba(234,179,8,0.05);border:1px solid rgba(234,179,8,0.18);
+                    font-size:0.82rem;color:var(--text-secondary);line-height:1.5">
+                    🍽️ <strong>Food scan:</strong> Issues one food token per participant. Blocks duplicate collection
+                    automatically.
+                </div>
+
+                <!-- Camera + Manual row -->
+                <div style="display:flex;gap:10px;margin-bottom:12px">
+                    <button type="button" class="btn btn-success" style="flex-shrink:0" onclick="openCamera('food')">
+                        📷 Open Camera
+                    </button>
+                    <div style="flex:1;color:var(--text-muted);font-size:0.8rem;display:flex;align-items:center">
+                        or type ID manually below
+                    </div>
+                </div>
+
+                <form id="food-form">
+                    <div class="scanner-input-wrap">
+                        <span class="scan-icon">🍽️</span>
+                        <input type="text" id="food-uid" class="form-control scanner-input" placeholder="HF-0001"
+                            autocomplete="off" autocapitalize="characters" style="flex:1" />
+                        <button type="submit" class="btn btn-success">Issue 🍽️</button>
+                    </div>
+                </form>
+
+                <div class="scanner-result" id="food-result"></div>
+            </div>
+        </div>
+
+        <!-- ── Session Log ────────────────────────────────────────── -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">🕐 This Session</div>
+                <span id="session-count" class="badge badge-entry">0</span>
+            </div>
+            <div class="card-body" id="session-log" style="padding:0 22px 12px;max-height:300px;overflow-y:auto">
+                <p style="color:var(--text-muted);font-size:0.85rem;padding:12px 0">No scans yet this session.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right: Announcements -->
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📢 Announcements</div>
+                <span class="badge badge-entry">{{ announcements | length }}</span>
+            </div>
+            <div class="card-body" style="padding:0 22px 16px;max-height:600px;overflow-y:auto">
+                {% if announcements %}
+                {% for ann in announcements %}
+                <div class="ann-card">
+                    <div class="ann-title">{{ ann.title }}</div>
+                    <div class="ann-body">{{ ann.message }}</div>
+                    <div class="ann-meta">
+                        <span>{{ ann.created_at.strftime('%d %b %H:%M') }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p style="color:var(--text-muted);font-size:0.85rem;padding:20px 0">No announcements yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══════════════════════════════════ Camera Modal ═══════════════════════════════════ -->
+<div id="camera-modal" style="
+  display:none; position:fixed; inset:0; z-index:2000;
+  background:rgba(0,0,0,0.88); backdrop-filter:blur(12px);
+  align-items:center; justify-content:center;">
+
+    <div style="
+    background:var(--bg-card); border:1px solid var(--border-bright);
+    border-radius:var(--radius-lg); padding:28px; width:380px;
+    text-align:center; position:relative;
+    box-shadow:0 0 40px rgba(0,245,255,0.15);">
+
+        <!-- Header -->
+        <div style="margin-bottom:16px">
+            <div id="cam-title" style="font-size:1.05rem;font-weight:800;margin-bottom:4px">📷 Scan QR Code</div>
+            <div id="cam-subtitle" style="font-size:0.78rem;color:var(--text-muted)">Point the camera at the
+                participant's QR code</div>
+        </div>
+
+        <!-- Camera viewfinder -->
+        <div style="position:relative;border-radius:12px;overflow:hidden;margin-bottom:16px;
+                border:2px solid var(--border-bright);background:#000">
+            <div id="qr-reader" style="width:100%"></div>
+
+            <!-- Scanning animation overlay -->
+            <div id="scan-line" style="
+        position:absolute;left:0;right:0;height:2px;
+        background:linear-gradient(90deg,transparent,var(--neon-cyan),transparent);
+        box-shadow:0 0 8px var(--neon-cyan);
+        animation:scanline 2s linear infinite;
+        top:0; pointer-events:none; display:none;">
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div id="cam-status" style="
+      padding:10px; border-radius:8px; font-size:0.85rem; font-weight:600;
+      background:rgba(0,245,255,0.06); border:1px solid rgba(0,245,255,0.15);
+      color:var(--neon-cyan); margin-bottom:16px; min-height:40px;
+      display:flex;align-items:center;justify-content:center;gap:8px">
+            <span id="cam-status-icon">🎥</span>
+            <span id="cam-status-text">Starting camera…</span>
+        </div>
+
+        <button onclick="closeCamera()" class="btn btn-ghost" style="width:100%;justify-content:center">
+            ✕ Cancel
+        </button>
+    </div>
+</div>
+
+<style>
+    @keyframes scanline {
+        0% {
+            top: 0%;
+        }
+
+        50% {
+            top: 95%;
+        }
+
+        100% {
+            top: 0%;
+        }
+    }
+
+    #qr-reader video {
+        border-radius: 10px;
+    }
+
+    #qr-reader__scan_region {
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ── Globals ──────────────────────────────────────────────────
+    const scanLog = [];
+    let html5QrCode = null;
+    let currentCameraMode = 'toggle'; // 'toggle' or 'food'
+    const SCAN_COOLDOWN_MS = 2500;
+    let lastScanTime = 0;
+
+    // ── Scan URLs ─────────────────────────────────────────────────
+    const URLS = {
+        toggle: "{{ url_for('volunteer.scan') }}",
+        food: "{{ url_for('volunteer.food_scan') }}",
+    };
+
+    // ── Open Camera ───────────────────────────────────────────────
+    function openCamera(mode) {
+        currentCameraMode = mode;
+        const modal = document.getElementById('camera-modal');
+        const title = document.getElementById('cam-title');
+        const subtitle = document.getElementById('cam-subtitle');
+
+        title.textContent = mode === 'food' ? '📷 Food Scanner Camera' : '📷 Entry / Exit Camera';
+        subtitle.textContent = mode === 'food'
+            ? 'Scan QR to issue a food token'
+            : 'Scan QR to mark Entry or Exit (auto-detected)';
+
+        modal.style.display = 'flex';
+        setStatus('🎥', 'Starting camera…', 'cyan');
+
+        html5QrCode = new Html5Qrcode('qr-reader');
+        Html5Qrcode.getCameras().then(cameras => {
+            if (!cameras || cameras.length === 0) {
+                setStatus('❌', 'No camera found on this device.', 'red');
+                return;
+            }
+            // Prefer back camera
+            const cam = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
+            document.getElementById('scan-line').style.display = 'block';
+
+            html5QrCode.start(
+                cam.id,
+                { fps: 12, qrbox: { width: 240, height: 240 }, aspectRatio: 1.0 },
+                onQRSuccess,
+                () => { }
+            ).then(() => {
+                setStatus('🟢', 'Camera ready — point at a QR code', 'green');
+            }).catch(err => {
+                setStatus('❌', 'Camera access denied. Allow camera permissions.', 'red');
+            });
+        }).catch(() => {
+            setStatus('❌', 'Camera access denied. Allow camera permissions.', 'red');
+        });
+    }
+
+    // ── Close Camera ──────────────────────────────────────────────
+    function closeCamera() {
+        document.getElementById('camera-modal').style.display = 'none';
+        document.getElementById('scan-line').style.display = 'none';
+        if (html5QrCode) {
+            html5QrCode.stop().catch(() => { }).finally(() => {
+                html5QrCode.clear();
+                html5QrCode = null;
+            });
+        }
+    }
+
+    // ── On QR Decoded ────────────────────────────────────────────
+    async function onQRSuccess(decodedText) {
+        const now = Date.now();
+        if (now - lastScanTime < SCAN_COOLDOWN_MS) return; // cooldown
+        lastScanTime = now;
+
+        const uid = decodedText.trim().toUpperCase();
+        setStatus('⏳', `Processing ${uid}…`, 'cyan');
+
+        try {
+            const res = await fetch(URLS[currentCameraMode], {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ uid }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                const p = data.participant;
+                const icon = data.action === 'entry' ? '✅' : data.action === 'exit' ? '🚪' : '🍽️';
+                setStatus(icon,
+                    `${p.name} (${p.unique_id}) — ${data.action.toUpperCase()} recorded`, 'green');
+                showToast(data.message, 'success');
+                addToLog(data);
+
+                // Populate the manual input field too for reference
+                const inputId = currentCameraMode === 'food' ? 'food-uid' : 'toggle-uid';
+                const resultId = currentCameraMode === 'food' ? 'food-result' : 'toggle-result';
+                document.getElementById(inputId).value = uid;
+                const resultEl = document.getElementById(resultId);
+                resultEl.className = 'scanner-result show success';
+                resultEl.innerHTML = buildResultHtml(data);
+
+                // Close camera after short delay so user sees feedback
+                setTimeout(closeCamera, 1800);
+            } else {
+                setStatus('⚠️', data.message, 'red');
+                showToast(data.message, 'error');
+                addToLog({ ...data, action: 'error' });
+            }
+        } catch (_) {
+            setStatus('❌', 'Network error. Try again.', 'red');
+        }
+    }
+
+    // ── Status Helper ─────────────────────────────────────────────
+    function setStatus(icon, text, color) {
+        const colors = { cyan: 'var(--neon-cyan)', green: 'var(--neon-green)', red: 'var(--neon-red)' };
+        const bgs = { cyan: 'rgba(0,245,255,0.06)', green: 'rgba(34,197,94,0.08)', red: 'rgba(239,68,68,0.08)' };
+        const borders = { cyan: 'rgba(0,245,255,0.15)', green: 'rgba(34,197,94,0.25)', red: 'rgba(239,68,68,0.25)' };
+        const el = document.getElementById('cam-status');
+        el.style.color = colors[color];
+        el.style.background = bgs[color];
+        el.style.border = `1px solid ${borders[color]}`;
+        document.getElementById('cam-status-icon').textContent = icon;
+        document.getElementById('cam-status-text').textContent = text;
+    }
+
+    // ── Result HTML Builder ────────────────────────────────────────
+    function buildResultHtml(data) {
+        if (!data.success) {
+            return `<span style="font-size:1.5rem">⚠️</span>
+            <div><div style="font-weight:700;color:var(--neon-red)">${data.message}</div></div>`;
+        }
+        const p = data.participant;
+        const teamMembers = data.team_members || [];
+        const icon = data.action === 'entry' ? '✅' : data.action === 'exit' ? '🚪' : '🍽️';
+        const color = data.action === 'entry' ? 'var(--neon-green)'
+            : data.action === 'exit' ? 'var(--neon-red)'
+                : 'var(--neon-yellow)';
+
+        let membersHtml = '';
+        if (teamMembers.length > 0) {
+            membersHtml = `
+        <div style="margin-top:12px; border-top:1px solid rgba(255,255,255,0.1); padding-top:12px">
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px">Team Members</div>
+            <table style="width:100%; font-size:0.8rem; border-collapse:collapse">
+                <thead>
+                    <tr style="color:var(--text-muted); text-align:left">
+                        <th style="padding:4px 0">ID</th>
+                        <th style="padding:4px 0">Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${teamMembers.map(m => `
+                        <tr style="${m.unique_id === p.unique_id ? 'background:rgba(0,245,255,0.1); font-weight:700; color:var(--neon-cyan)' : ''}">
+                            <td style="padding:6px 4px; border-radius:4px 0 0 4px">${m.unique_id}</td>
+                            <td style="padding:6px 4px; border-radius:0 4px 4px 0">${m.name} ${m.unique_id === p.unique_id ? ' <span style="font-size:0.7rem">(Scanned)</span>' : ''}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>`;
+        }
+
+        return `
+    <div style="display:flex; flex-direction:column; width:100%">
+        <div style="display:flex; gap:12px; align-items:flex-start">
+            <span style="font-size:2.2rem">${icon}</span>
+            <div style="flex:1">
+                <div style="font-weight:700;font-size:1.1rem;margin-bottom:4px">${p.name}</div>
+                <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px">
+                    <strong style="color:var(--text-primary)">Team:</strong> ${data.team_name} <br>
+                    <strong style="color:var(--text-primary)">Domain:</strong> ${data.domain}
+                </div>
+                <div style="font-weight:700;color:${color};font-size:0.85rem;margin-bottom:8px">
+                    ${data.action.toUpperCase()} recorded
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <span class="badge ${p.is_inside ? 'badge-inside' : 'badge-outside'}">
+                        <span class="badge-dot"></span>${p.is_inside ? 'Inside' : 'Outside'}
+                    </span>
+                    <span class="badge ${p.food_issued ? 'badge-food' : 'badge-nofood'}">
+                        ${p.food_issued ? '🍽️ Food ×' + p.food_count : 'No Food Yet'}
+                    </span>
+                </div>
+            </div>
+        </div>
+        ${membersHtml}
+    </div>`;
+    }
+
+    // ── Session Log ───────────────────────────────────────────────
+    function addToLog(data) {
+        const time = new Date().toLocaleTimeString();
+        scanLog.unshift({ ...data, time });
+        document.getElementById('session-count').textContent = scanLog.length;
+        const icons = { entry: '✅', exit: '🚪', food: '🍽️', error: '⚠️' };
+        const html = scanLog.slice(0, 20).map(s => `
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 0;
+                border-bottom:1px solid rgba(255,255,255,0.04)">
+      <span style="font-size:1.1rem">${icons[s.action] || '⚠️'}</span>
+      <div style="flex:1;font-size:0.85rem;font-weight:600">${s.message}</div>
+      <span style="font-size:0.72rem;color:var(--text-muted);flex-shrink:0">${s.time}</span>
+    </div>`).join('');
+        document.getElementById('session-log').innerHTML =
+            `<div style="margin-top:4px">${html}</div>`;
+    }
+
+    // ── Manual Form Handlers ──────────────────────────────────────
+    async function handleManualScan(mode) {
+        const inputId = mode === 'food' ? 'food-uid' : 'toggle-uid';
+        const resultId = mode === 'food' ? 'food-result' : 'toggle-result';
+        const uid = document.getElementById(inputId).value.trim().toUpperCase();
+        const resultEl = document.getElementById(resultId);
+        if (!uid) { showToast('Please enter a participant ID or use the camera.', 'error'); return; }
+
+        try {
+            const res = await fetch(URLS[mode], {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ uid }),
+            });
+            const data = await res.json();
+            resultEl.className = `scanner-result show ${data.success ? 'success' : 'error'}`;
+            resultEl.innerHTML = buildResultHtml(data);
+            showToast(data.message, data.success ? 'success' : 'error');
+            if (data.success) {
+                document.getElementById(inputId).value = '';
+                addToLog(data);
+            } else {
+                addToLog({ ...data, action: 'error' });
+            }
+        } catch (_) { showToast('Network error.', 'error'); }
+        document.getElementById(inputId).focus();
+    }
+
+    document.getElementById('toggle-form').addEventListener('submit', e => { e.preventDefault(); handleManualScan('toggle'); });
+    document.getElementById('food-form').addEventListener('submit', e => { e.preventDefault(); handleManualScan('food'); });
+
+    // Close modal on backdrop click
+    document.getElementById('camera-modal').addEventListener('click', function (e) {
+        if (e.target === this) closeCamera();
+    });
+
+    // Auto-focus entry scanner
+    document.getElementById('toggle-uid').focus();
+</script>
+{% endblock %}

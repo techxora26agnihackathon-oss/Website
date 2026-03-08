@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Payments{% endblock %}
+{% block page_title %}Payment Verification{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">PAYMENTS</h1>
+        <p class="page-subtitle">// Review and verify team payment proofs</p>
+    </div>
+</div>
+
+{% if not payments %}
+<div class="empty-state">
+    <div style="font-size:3rem;margin-bottom:16px">💳</div>
+    <div>No payment submissions yet.</div>
+</div>
+{% else %}
+<div class="table-card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Team</th>
+                <th>Domain</th>
+                <th>Transaction ID</th>
+                <th>Submitted</th>
+                <th>Proof</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pay in payments %}
+            <tr>
+                <td>
+                    <div style="font-weight:600">{{ pay.team_obj.team_name }}</div>
+                    <div style="font-size:0.72rem;color:var(--text-muted)">T{{ pay.team_obj.team_number }}</div>
+                </td>
+                <td>
+                    <span style="
+                    background:rgba(0,245,255,0.1);color:var(--cyan);
+                    font-size:0.75rem;font-weight:700;letter-spacing:1px;
+                    padding:3px 8px;border-radius:3px;
+                ">{{ pay.team_obj.domain_short }}</span>
+                </td>
+                <td><code style="color:var(--text-primary)">{{ pay.transaction_id }}</code></td>
+                <td style="color:var(--text-secondary);font-size:0.82rem">{{ pay.submitted_at.strftime('%d %b %Y,
+                    %H:%M') }}</td>
+                <td>
+                    {% if pay.proof_image_path %}
+                    <button class="btn btn-ghost btn-sm"
+                        onclick="document.getElementById('proof-modal-{{ pay.id }}').style.display='flex'">
+                        🖼 View Proof
+                    </button>
+                    <!-- Proof Modal -->
+                    <div id="proof-modal-{{ pay.id }}" style="
+                    display:none;position:fixed;inset:0;
+                    background:rgba(0,0,0,0.85);z-index:1000;
+                    align-items:center;justify-content:center;
+                " onclick="this.style.display='none'">
+                        <div style="max-width:90vw;max-height:90vh;text-align:center" onclick="event.stopPropagation()">
+                            <img src="{{ url_for('static', filename=pay.proof_image_path) }}"
+                                style="max-width:100%;max-height:80vh;border-radius:8px;border:1px solid var(--glass-border)"
+                                alt="Payment Proof">
+                            <div style="margin-top:12px">
+                                <button class="btn btn-ghost btn-sm"
+                                    onclick="document.getElementById('proof-modal-{{ pay.id }}').style.display='none'">✕
+                                    Close</button>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <span style="color:var(--text-muted);font-size:0.8rem">No file</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if pay.status == 'verified' %}
+                    <span class="badge badge-green">✓ Verified</span>
+                    {% elif pay.status == 'rejected' %}
+                    <span class="badge badge-red">✗ Rejected</span>
+                    {% else %}
+                    <span class="badge badge-yellow">⏳ Pending</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if pay.status == 'pending' %}
+                    <form method="POST" action="{{ url_for('admin.verify_payment', pay_id=pay.id) }}"
+                        style="display:inline">
+                        <button type="submit" class="btn btn-primary btn-sm">✓ Verify</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('admin.reject_payment', pay_id=pay.id) }}"
+                        style="display:inline;margin-left:6px">
+                        <button type="submit" class="btn btn-danger btn-sm">✗ Reject</button>
+                    </form>
+                    {% elif pay.status == 'verified' %}
+                    <form method="POST" action="{{ url_for('admin.resend_email', pay_id=pay.id) }}"
+                        style="display:inline">
+                        <button type="submit" class="btn btn-ghost btn-sm"
+                            title="Re-send ID card emails to all team members"
+                            onclick="return confirm('Resend ID card emails to all members of {{ pay.team_obj.team_name }}?')">
+                            📧 Resend Email
+                        </button>
+                    </form>
+                    {% else %}
+                    <span style="color:var(--text-muted);font-size:0.8rem">— done —</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

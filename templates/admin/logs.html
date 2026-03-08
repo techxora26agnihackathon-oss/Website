@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Activity Logs{% endblock %}
+{% block page_title %}📋 Activity Logs{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header" style="flex-wrap:wrap;gap:10px">
+        <div class="card-title">📋 Event Log</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <!-- Filter -->
+            <div style="display:flex;gap:4px">
+                {% for f, label in [('all','All'),('entry','Entry'),('exit','Exit'),('food','Food'),('system','System')]
+                %}
+                <a href="{{ url_for('admin.logs', filter=f) }}"
+                    class="btn btn-sm {% if filter_action == f %}btn-primary{% else %}btn-ghost{% endif %}">
+                    {{ label }}
+                </a>
+                {% endfor %}
+            </div>
+            <form method="POST" action="{{ url_for('admin.clear_logs') }}"
+                onsubmit="return confirm('Clear all activity logs? This cannot be undone.')">
+                <button type="submit" class="btn btn-danger btn-sm">🗑️ Clear Logs</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card-body" style="padding:0 22px 16px">
+        {% if logs %}
+        <div class="log-feed" style="margin-top:8px">
+            {% for log in logs %}
+            <div class="log-item">
+                <div class="log-time">{{ log.timestamp.strftime('%H:%M:%S') }}</div>
+                <span class="badge badge-{{ log.action }}" style="align-self:flex-start;margin-top:2px">{{ log.action
+                    }}</span>
+                <div class="log-content">
+                    <div class="log-msg">{{ log.note or '–' }}</div>
+                    {% if log.participant %}
+                    <div class="log-meta">
+                        {{ log.participant.name }} ·
+                        <span style="font-family:monospace">{{ log.participant.unique_id }}</span> ·
+                        {{ log.timestamp.strftime('%d %b %Y') }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color:var(--text-muted);font-size:0.85rem;padding:24px 0">No events logged yet.</p>
+        {% endif %}
+    </div>
+
+    <div style="padding:12px 22px;border-top:1px solid var(--border);font-size:0.78rem;color:var(--text-muted)">
+        {{ logs | length }} event{{ 's' if logs | length != 1 else '' }} shown
+    </div>
+</div>
+{% endblock %}

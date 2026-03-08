@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Edit Participant{% endblock %}
+{% block page_title %}✏️ Edit Participant{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <div class="card-header">
+        <div class="card-title">Edit Details: {{ p.unique_id }}</div>
+    </div>
+    <div class="card-body" style="padding: 24px;">
+        <form method="POST">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label for="name"
+                    style="display:block; margin-bottom:8px; color:var(--neon-cyan); font-size:0.8rem; font-family:monospace;">FULL
+                    NAME</label>
+                <input type="text" id="name" name="name" class="form-control" value="{{ p.name }}" required
+                    style="width:100%;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label for="email"
+                    style="display:block; margin-bottom:8px; color:var(--neon-cyan); font-size:0.8rem; font-family:monospace;">EMAIL
+                    ADDRESS</label>
+                <input type="email" id="email" name="email" class="form-control" value="{{ p.email }}" required
+                    style="width:100%;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label for="phone"
+                    style="display:block; margin-bottom:8px; color:var(--neon-cyan); font-size:0.8rem; font-family:monospace;">PHONE
+                    NUMBER</label>
+                <input type="text" id="phone" name="phone" class="form-control" value="{{ p.phone }}" required
+                    style="width:100%;">
+            </div>
+
+            <div style="display:flex; gap:12px; margin-top:32px;">
+                <button type="submit" class="btn btn-primary" style="flex:1;">Update Participant</button>
+                <a href="{{ url_for('admin.participants') }}" class="btn btn-ghost"
+                    style="flex:1; text-align:center;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

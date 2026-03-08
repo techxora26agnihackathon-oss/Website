@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}Teams{% endblock %}
+{% block page_title %}Teams Overview{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">TEAMS</h1>
+        <p class="page-subtitle">// Registered teams grouped by domain</p>
+    </div>
+    <a href="{{ url_for('admin.payments') }}" class="btn btn-ghost btn-sm"> Review Payments</a>
+</div>
+
+{% if not teams %}
+<div class="empty-state">
+    <div style="font-size:3rem;margin-bottom:16px">👥</div>
+    <div>No teams registered yet.</div>
+</div>
+{% endif %}
+
+<div style="display:flex;flex-direction:column;gap:24px;max-width:900px">
+    {% for team in teams %}
+    <div class="stat-card" style="padding:0;overflow:hidden">
+        <!-- Team Header -->
+        <div style="
+        display:flex;align-items:center;justify-content:space-between;
+        padding:18px 24px;
+        background:rgba(0,245,255,0.05);
+        border-bottom:1px solid var(--glass-border);
+    ">
+            <div style="display:flex;align-items:center;gap:16px">
+                <div style="
+                background:var(--cyan);color:#ffffff;
+                font-family:'Bebas Neue',cursive;
+                font-size:1.1rem;letter-spacing:1px;
+                padding:6px 14px;border-radius:4px;
+            ">{{ team.domain_short }} · T{{ team.team_number }}</div>
+                <div>
+                    <div style="font-weight:700;font-size:1rem;color:var(--text-primary)">{{ team.team_name }}</div>
+                    <div style="font-size:0.75rem;color:var(--text-secondary)">{{ team.domain }} · {{ team.college or
+                        'N/A' }}</div>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px">
+                {% if team.payment_status == 'verified' %}
+                <span class="badge badge-green">✓ Payment Verified</span>
+                {% elif team.payment_status == 'rejected' %}
+                <span class="badge badge-red">✗ Payment Rejected</span>
+                {% else %}
+                <span class="badge badge-yellow">⏳ Payment Pending</span>
+                {% endif %}
+                <span style="font-size:0.75rem;color:var(--text-muted)">{{ team.members.count() }} / 4 member(s)</span>
+                {% if team.members.count() < 4 %} <button class="btn btn-purple btn-sm"
+                    onclick="showAddMemberForm({{ team.id }}, '{{ team.team_name }}')">
+                    + Add Member
+                    </button>
+                    {% endif %}
+                    <form action="{{ url_for('admin.delete_team', team_id=team.id) }}" method="POST" style="margin: 0;"
+                        onsubmit="return confirm('Are you sure you want to permanently delete this team and free its slot? This action cannot be undone.');">
+                        <button type="submit" class="btn btn-ghost btn-sm"
+                            style="color:var(--error); border-color:rgba(239, 68, 68, 0.2);">
+                            🗑 Delete
+                        </button>
+                    </form>
+            </div>
+        </div>
+
+        <!-- Member List -->
+        <div style="padding:16px 24px">
+            {% if team.members.count() == 0 %}
+            <div style="color:var(--text-muted);font-size:0.85rem">No members found.</div>
+            {% else %}
+            <table class="data-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Participant ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th>ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in team.members.order_by('member_number').all() %}
+                    <tr>
+                        <td style="color:var(--text-muted)">{{ p.member_number }}</td>
+                        <td>
+                            <code style="color:var(--cyan);font-size:0.85rem">{{ p.unique_id }}</code>
+                        </td>
+                        <td>{{ p.name }}</td>
+                        <td style="color:var(--text-secondary)">{{ p.email }}</td>
+                        <td style="color:var(--text-secondary)">{{ p.phone }}</td>
+                        <td>
+                            {% if p.is_inside %}
+                            <span class="badge badge-green">Inside</span>
+                            {% else %}
+                            <span class="badge badge-gray">Outside</span>
+                            {% endif %}
+                            {% if p.food_issued %}
+                            <span class="badge badge-yellow">Food ✓</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if p.qr_path %}
+
+                            {% endif %}
+                            <a href="{{ url_for('auth.download_id_card', uid=p.unique_id) }}"
+                                class="btn btn-ghost btn-sm" title="Download ID Card">⬇ ID</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Add Member Modal (Overlay) -->
+<div id="addMemberModal" style="
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); 
+    backdrop-filter:blur(10px); z-index:1000; align-items:center; justify-content:center;
+">
+    <div style="
+        background:var(--bg-card); width:100%; max-width:450px; 
+        border:1px solid var(--glass-border); border-radius:12px; padding:32px;
+        box-shadow: 0 0 50px rgba(0,255,204,0.1);
+    ">
+        <h2 style="font-family:'Bebas Neue',cursive; color:var(--cyan); font-size:1.8rem; margin-bottom:8px;">ADD TEAM
+            MEMBER</h2>
+        <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:24px;">Adding member to: <span
+                id="targetTeamName" style="color:var(--text-primary); font-weight:700;"></span></p>
+
+        <form id="addMemberForm" method="POST">
+            <input type="hidden" name="team_id" id="targetTeamId">
+            <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:24px;">
+                <div class="form-group" style="display:flex; flex-direction:column; gap:8px;">
+                    <label style="font-size:0.75rem; color:var(--cyan); font-family:'JetBrains Mono',monospace;">Full
+                        Name</label>
+                    <input type="text" name="name" required style="
+                        background:rgba(0,10,10,0.5); border:1px solid var(--glass-border); 
+                        padding:12px; border-radius:6px; color:var(--text-primary); outline:none;
+                    ">
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:8px;">
+                    <label
+                        style="font-size:0.75rem; color:var(--cyan); font-family:'JetBrains Mono',monospace;">Email</label>
+                    <input type="email" name="email" required style="
+                        background:rgba(0,10,10,0.5); border:1px solid var(--glass-border); 
+                        padding:12px; border-radius:6px; color:var(--text-primary); outline:none;
+                    ">
+                </div>
+                <div class="form-group" style="display:flex; flex-direction:column; gap:8px;">
+                    <label style="font-size:0.75rem; color:var(--cyan); font-family:'JetBrains Mono',monospace;">Phone
+                        Number</label>
+                    <input type="tel" name="phone" required style="
+                        background:rgba(0,10,10,0.5); border:1px solid var(--glass-border); 
+                        padding:12px; border-radius:6px; color:var(--text-primary); outline:none;
+                    ">
+                </div>
+            </div>
+
+            <div style="display:flex; gap:12px;">
+                <button type="button" class="btn btn-ghost" style="flex:1;"
+                    onclick="hideAddMemberForm()">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="flex:1;">Confirm Add</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function showAddMemberForm(teamId, teamName) {
+        document.getElementById('targetTeamId').value = teamId;
+        document.getElementById('targetTeamName').innerText = teamName;
+        document.getElementById('addMemberForm').action = "/admin/teams/" + teamId + "/add_member";
+        document.getElementById('addMemberModal').style.display = 'flex';
+    }
+
+    function hideAddMemberForm() {
+        document.getElementById('addMemberModal').style.display = 'none';
+    }
+</script>
+{% endblock %}

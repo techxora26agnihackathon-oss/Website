@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment – TECHXORA 26</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --cyan: #00f5ff;
+            --cyan-glow: rgba(0, 245, 255, 0.25);
+            --bg: #050810;
+            --bg-card: #0d1225;
+            --border: rgba(0, 245, 255, 0.12);
+            --border-b: rgba(0, 245, 255, 0.35);
+            --text: #e2e8f0;
+            --muted: #475569;
+            --yellow: #eab308;
+            --error: #ef4444;
+            --green: #22c55e;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .payment-box {
+            width: 100%;
+            max-width: 620px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 0 60px rgba(0, 245, 255, 0.06);
+        }
+
+        .pay-header {
+            background: rgba(0, 245, 255, 0.05);
+            border-bottom: 1px solid var(--border);
+            padding: 28px 36px;
+            text-align: center;
+        }
+
+        .pay-header h1 {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 2.5rem;
+            color: var(--cyan);
+            letter-spacing: 3px;
+        }
+
+        .pay-header p {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--muted);
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+
+        /* Steps bar */
+        .steps {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .step {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .step.done {
+            background: rgba(0, 245, 255, 0.05);
+            color: var(--cyan);
+        }
+
+        .step.active {
+            background: rgba(0, 245, 255, 0.1);
+            color: var(--cyan);
+            border-bottom: 2px solid var(--cyan);
+        }
+
+        .pay-body {
+            padding: 32px 36px;
+        }
+
+        /* Team summary */
+        .team-summary {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 28px;
+        }
+
+        .team-summary h3 {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 1.4rem;
+            color: var(--cyan);
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .summary-row:last-child {
+            border: none;
+        }
+
+        .summary-row .key {
+            color: var(--muted);
+        }
+
+        .summary-row .val {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        /* Fee box */
+        .fee-box {
+            background: rgba(0, 245, 255, 0.06);
+            border: 1px solid var(--border-b);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .fee-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .fee-amount {
+            font-family: 'Bebas Neue', cursive;
+            font-size: 3rem;
+            color: var(--cyan);
+            letter-spacing: 2px;
+            line-height: 1;
+        }
+
+        .fee-note {
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        /* UPI instruction */
+        .upi-section {
+            margin-bottom: 28px;
+        }
+
+        .upi-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            color: var(--cyan);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .upi-id-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px dashed var(--border-b);
+            border-radius: 6px;
+            padding: 14px 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            color: var(--cyan);
+            letter-spacing: 2px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .copy-btn {
+            background: rgba(0, 245, 255, 0.1);
+            border: 1px solid var(--border-b);
+            color: var(--cyan);
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            letter-spacing: 1px;
+            font-family: 'JetBrains Mono', monospace;
+            transition: background 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: var(--cyan-glow);
+        }
+
+        /* Form fields */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--cyan);
+            margin-bottom: 8px;
+        }
+
+        label span {
+            color: var(--error);
+        }
+
+        .form-control {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 14px 16px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.9rem;
+            color: var(--text);
+            outline: none;
+            transition: border-color .2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 2px var(--cyan-glow);
+        }
+
+        .form-control::placeholder {
+            color: var(--muted);
+        }
+
+        /* File upload */
+        .upload-zone {
+            border: 2px dashed var(--border-b);
+            border-radius: 8px;
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.has-file {
+            border-color: var(--cyan);
+            background: rgba(0, 245, 255, 0.04);
+        }
+
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .upload-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+        }
+
+        #file-name {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: var(--cyan);
+            display: none;
+        }
+
+        /* Buttons */
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .btn-back {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            padding: 14px 24px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-back:hover {
+            color: var(--text);
+            border-color: var(--text);
+        }
+
+        .btn-submit {
+            flex: 1;
+            padding: 16px;
+            border-radius: 6px;
+            border: none;
+            background: var(--cyan);
+            color: #000;
+            font-weight: 800;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 20px rgba(0, 245, 255, 0.3);
+        }
+
+        .btn-submit:hover {
+            box-shadow: 0 0 32px rgba(0, 245, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* Flash  */
+        .flash {
+            padding: 14px 18px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .flash.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="payment-box">
+        <div class="pay-header">
+            <h1>TECHXORA 26</h1>
+            <p>// Educational Event Management System · Step 2 of 2</p>
+        </div>
+
+        <div class="steps">
+            <div class="step done">✓ Step 1 · Team Details</div>
+            <div class="step active"> Step 2 · Payment</div>
+        </div>
+
+        <div class="pay-body">
+
+            {% with messages = get_flashed_messages(with_categories=True) %}
+            {% for category, msg in messages %}
+            <div class="flash {{ category }}">{{ msg }}</div>
+            {% endfor %}
+            {% endwith %}
+
+            <!-- Team Summary -->
+            <div class="team-summary">
+                <h3>REGISTRATION SUMMARY</h3>
+                <div class="summary-row"><span class="key">Team Name</span><span class="val">{{ reg.team_name }}</span>
+                </div>
+                <div class="summary-row"><span class="key">Domain</span><span class="val">{{ reg.domain }} ({{
+                        reg.domain_short }})</span></div>
+                <div class="summary-row"><span class="key">College</span><span class="val">{{ reg.college or '—'
+                        }}</span></div>
+                <div class="summary-row"><span class="key">Members</span><span class="val">{{ reg.members | length
+                        }}</span></div>
+            </div>
+
+            <!-- Fee -->
+            <div class="fee-box">
+                <div class="fee-label">Registration Fee</div>
+                <div class="fee-amount">₹{{ fee }}</div>
+                <div class="fee-note">₹{{ per_person }} per person × {{ reg.members | length }} members</div>
+                <div class="fee-note" style="margin-top:4px; opacity:0.8;">Pay via UPI to the ID below and upload the
+                    screenshot.</div>
+            </div>
+
+            <!-- UPI ID -->
+            <div class="upi-section">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <img src="{{ url_for('static', filename='upi/upi.jpeg') }}" alt="UPI QR Code"
+                        style="max-width: 220px; width: 100%; border-radius: 12px; border: 2px solid var(--border-b); padding: 10px; background: rgba(0,0,0,0.5);">
+                </div>
+                <div class="upi-label">UPI Payment ID</div>
+                <div class="upi-id-box">
+                    <span id="upi-id">karunkalyanaraman@okicici</span>
+                    <button class="copy-btn"
+                        onclick="navigator.clipboard.writeText('karunkalyanaraman@okicici').then(()=>this.innerText='Copied!').catch(()=>{})">Copy</button>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <form method="POST" action="{{ url_for('auth.register_step2') }}" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="transaction_id">Transaction ID <span>*</span></label>
+                    <input type="text" id="transaction_id" name="transaction_id" class="form-control"
+                        placeholder="e.g. UPI123456789" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Payment Screenshot <span>*</span></label>
+                    <div class="upload-zone" id="upload-zone">
+                        <input type="file" name="payment_proof" id="payment_proof" accept="image/*,.pdf" required
+                            onchange="handleFileChange(this)">
+                        <div class="upload-icon"></div>
+                        <div class="upload-text">Click or drag screenshot here<br>Accepts JPG, PNG, PDF</div>
+                        <div id="file-name"></div>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <a href="{{ url_for('auth.index') }}#register" class="btn-back">← Back</a>
+                    <button type="submit" class="btn-submit"> SUBMIT & GENERATE IDs</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function handleFileChange(input) {
+            const zone = document.getElementById('upload-zone');
+            const nameEl = document.getElementById('file-name');
+            if (input.files && input.files[0]) {
+                zone.classList.add('has-file');
+                nameEl.style.display = 'block';
+                nameEl.textContent = '✓ ' + input.files[0].name;
+            }
+        }
+    </script>
+</body>
+
+</html>

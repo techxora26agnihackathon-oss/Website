@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}TECHXORA 26{% endblock %} – TECHXORA 26</title>
+    <meta name="description" content="TECHXORA 26 – QR-based Hackathon Management System" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+
+<body>
+    <canvas id="particles-canvas"></canvas>
+    <div id="toast-container"></div>
+    <!-- Back button -->
+    <button onclick="history.back()" title="Go back"
+        style="position:fixed;top:18px;left:18px;z-index:999;background:rgba(13,18,37,0.85);border:1px solid rgba(0,245,255,0.25);color:#94a3b8;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:1rem;backdrop-filter:blur(8px);transition:all 0.2s;"
+        onmouseover="this.style.color='#e2e8f0';this.style.borderColor='rgba(0,245,255,0.5)'"
+        onmouseout="this.style.color='#94a3b8';this.style.borderColor='rgba(0,245,255,0.25)'">&#8592; Back</button>
+    {% block content %}{% endblock %}
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TECHXORA 26 — Hackathon Management System </title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+
+<body>
+
+  <!-- Particles Canvas -->
+  <canvas id="particles-canvas"></canvas>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">
+      <span class="nav-logo-bolt"></span> TECHXORA
+    </div>
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="showPage('home', this)">Home</button>
+      <button class="tab-btn" onclick="showPage('register', this)">Register</button>
+      <button class="tab-btn" onclick="showPage('scanner', this)">Scanner</button>
+      <button class="tab-btn" onclick="showPage('participants', this)">Participants</button>
+      <button class="tab-btn" onclick="showPage('logs', this)">Event Log</button>
+    </div>
+  </nav>
+
+  <!-- ═══════════ HOME PAGE ═══════════ -->
+  <div id="page-home" class="page active">
+    <div class="hero">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        Live · 24-Hour Hackathon
+      </div>
+      <h1>TECH<span class="year-tag">-26</span><br>XORA</h1>
+      <p class="hero-sub">// Registration · QR Entry · Food Tokens · Live Tracking</p>
+
+      <!-- Countdown Timer -->
+      <div class="countdown-container" id="event-countdown">
+        <div class="countdown-label">TECHXORA Starts In:</div>
+        <div class="countdown-timer">
+          <div class="timer-item"><span id="days">00</span><span class="timer-unit">Days</span></div>
+          <div class="timer-sep">:</div>
+          <div class="timer-item"><span id="hours">00</span><span class="timer-unit">Hours</span></div>
+          <div class="timer-sep">:</div>
+          <div class="timer-item"><span id="minutes">00</span><span class="timer-unit">Minutes</span></div>
+          <div class="timer-sep">:</div>
+          <div class="timer-item"><span id="seconds">00</span><span class="timer-unit">Seconds</span></div>
+        </div>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-num" id="stat-total">0</span>
+          <span class="stat-label">Registered</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num" id="stat-inside">0</span>
+          <span class="stat-label">Inside Now</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num" id="stat-food">0</span>
+          <span class="stat-label">Food Claimed</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num" id="stat-events">0</span>
+          <span class="stat-label">Total Events</span>
+        </div>
+      </div>
+
+      <div class="hero-cta">
+        <button class="btn btn-primary" onclick="showPage('register', document.querySelectorAll('.tab-btn')[1])">✦
+          Register Participant</button>
+        <button class="btn btn-outline" onclick="showPage('scanner', document.querySelectorAll('.tab-btn')[2])">⬡ Open
+          Scanner</button>
+      </div>
+    </div>
+
+    <!-- Food Config -->
+    <div style="max-width:680px;margin:0 auto;">
+      <div class="card">
+        <div class="card-title">Food & Refreshment Setup</div>
+        <div class="card-sub">// Configure available food tokens for the event</div>
+        <div id="food-config-list" class="food-tokens-section"></div>
+        <div class="food-add-row">
+          <input type="text" id="new-food-name" placeholder="e.g. Dinner, Breakfast, Snack..."
+            onkeydown="if(event.key==='Enter') addFoodToken()">
+          <button class="btn btn-gold" onclick="addFoodToken()">+ Add Token</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ REGISTER PAGE ═══════════ -->
+  <div id="page-register" class="page">
+    <div style="max-width:680px;margin:0 auto;">
+      <div class="card">
+        <div class="card-title">Participant Registration</div>
+        <div class="card-sub">// Fill in details to generate QR ID card</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Full Name *</label>
+            <input type="text" id="reg-name" placeholder="Your full name">
+          </div>
+          <div class="form-group">
+            <label>Email *</label>
+            <input type="email" id="reg-email" placeholder="you@email.com">
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" id="reg-phone" placeholder="+91 98765 43210">
+          </div>
+          <div class="form-group">
+            <label>College / Institution *</label>
+            <input type="text" id="reg-college" placeholder="College name">
+          </div>
+          <div class="form-group">
+            <label>Team Name</label>
+            <input type="text" id="reg-team" placeholder="Optional team name">
+          </div>
+          <div class="form-group">
+            <label>Role</label>
+            <select id="reg-role">
+              <option value="Participant">Participant</option>
+              <option value="Mentor">Mentor</option>
+              <option value="Organizer">Organizer</option>
+              <option value="Judge">Judge</option>
+              <option value="Volunteer">Volunteer</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="registerParticipant()" style="width:100%;justify-content:center;">
+          ✦ Generate QR &amp; ID Card
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ SCANNER PAGE ═══════════ -->
+  <div id="page-scanner" class="page">
+    <div class="scanner-area">
+      <div class="scanner-type-tabs">
+        <button class="scanner-tab active" id="tab-entry" onclick="setScannerMode('entry')">↓ Entry</button>
+        <button class="scanner-tab" id="tab-exit" onclick="setScannerMode('exit')">↑ Exit</button>
+        <button class="scanner-tab food-tab" id="tab-food" onclick="setScannerMode('food')">🍽 Food /
+          Refreshment</button>
+      </div>
+
+      <div id="food-token-select" style="display:none;margin-bottom:1.5rem;">
+        <div class="form-group">
+          <label>Select Food Token</label>
+          <select id="food-select" style="margin-top:0.4rem;"></select>
+        </div>
+      </div>
+
+      <div class="scan-input-group">
+        <input type="text" id="scan-input" placeholder="ENTER PARTICIPANT ID..."
+          oninput="this.value = this.value.toUpperCase()" onkeydown="if(event.key==='Enter') processScan()">
+        <button class="btn btn-primary" onclick="processScan()">SCAN</button>
+      </div>
+
+      <div id="scan-result" class="scan-result">
+        <div id="scan-status-text" class="scan-status"></div>
+        <div id="scan-detail-text" class="scan-detail"></div>
+        <div id="scan-time" class="scan-timestamp"></div>
+      </div>
+
+      <div class="how-to-card">
+        <div class="card-title">How to Use</div>
+        <div class="card-sub">
+          // Type the participant ID (e.g. HF-0042) or use a barcode scanner connected to keyboard input. Press Enter or
+          click SCAN.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PARTICIPANTS PAGE ═══════════ -->
+  <div id="page-participants" class="page">
+    <div class="stats-grid">
+      <div class="stat-card green">
+        <span class="stat-card-icon">👥</span>
+        <div class="stat-card-num" id="dash-total">0</div>
+        <div class="stat-card-label">Total Registered</div>
+      </div>
+      <div class="stat-card blue">
+        <span class="stat-card-icon">🏠</span>
+        <div class="stat-card-num" id="dash-inside">0</div>
+        <div class="stat-card-label">Currently Inside</div>
+      </div>
+      <div class="stat-card red">
+        <span class="stat-card-icon">🚪</span>
+        <div class="stat-card-num" id="dash-outside">0</div>
+        <div class="stat-card-label">Outside</div>
+      </div>
+      <div class="stat-card gold">
+        <span class="stat-card-icon">🍽</span>
+        <div class="stat-card-num" id="dash-food">0</div>
+        <div class="stat-card-label">Food Claimed</div>
+      </div>
+    </div>
+
+    <div class="search-bar">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="search-input" placeholder="Search by name, ID, college, team..." oninput="renderTable()">
+    </div>
+
+    <div class="table-actions">
+      <button class="btn btn-outline btn-sm" onclick="exportCSV()">↓ Export CSV</button>
+      <button class="btn btn-outline-red btn-sm" onclick="clearAll()">🗑 Clear All Data</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>College</th>
+            <th>Team</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Food Tokens</th>
+            <th>Entries</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="participants-tbody">
+          <tr>
+            <td colspan="9">
+              <div class="empty-state">
+                <div class="es-icon">⬡</div>
+                <div class="es-title">No Participants Yet</div>
+                Register someone to get started.
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════ LOGS PAGE ═══════════ -->
+  <div id="page-logs" class="page">
+    <div class="log-header">
+      <div>
+        <div class="card-title">Event Log</div>
+        <div class="card-sub" style="margin-bottom:0;">// Real-time activity feed</div>
+      </div>
+      <button class="btn btn-outline-red btn-sm" onclick="clearLogs()">Clear Logs</button>
+    </div>
+    <div id="log-list" class="log-list">
+      <div class="empty-state">
+        <div class="es-icon">📋</div>
+        <div class="es-title">No Events Logged</div>
+        Activity will appear here in real-time.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ SUCCESS MODAL ═══════════ -->
+  <div id="modal" class="modal-overlay">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <span class="modal-icon">✅</span>
+      <div class="modal-title">Registration Complete!</div>
+      <div class="modal-sub" id="modal-sub">Your participant ID card is ready</div>
+      <div class="participant-id" id="modal-pid"></div>
+      <div>
+        <div id="qr-container"></div>
+      </div>
+      <div id="modal-info" class="modal-info-block"></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="printBadge()">🖨 Print Badge</button>
+        <button class="btn btn-outline" onclick="closeModal()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PRINT AREA ═══════════ -->
+  <div id="print-area">
+    <div
+      style="font-family:'Share Tech Mono',monospace;padding:20px;text-align:center;border:3px solid #000;max-width:350px;margin:auto;">
+      <div style="font-size:24px;font-weight:bold;margin-bottom:5px;"> TECHXORA 26</div>
+      <div id="print-role" style="font-size:12px;letter-spacing:3px;margin-bottom:15px;"></div>
+      <div id="print-qr" style="margin:0 auto 15px;display:inline-block;"></div>
+      <div id="print-pid" style="font-size:28px;letter-spacing:5px;font-weight:bold;margin-bottom:5px;"></div>
+      <div id="print-name" style="font-size:18px;margin-bottom:3px;"></div>
+      <div id="print-college" style="font-size:12px;margin-bottom:3px;"></div>
+      <div id="print-team" style="font-size:12px;"></div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast">
+    <span id="toast-icon">✓</span>
+    <span id="toast-msg"></span>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Countdown Timer Logic
+    (function () {
+      const eventStart = new Date("2026-04-15T09:00:00").getTime();
+      const countdownEl = document.getElementById("event-countdown");
+
+      const timer = setInterval(function () {
+        const now = new Date().getTime();
+        const distance = eventStart - now;
+
+        if (distance <= 0) {
+          clearInterval(timer);
+          if (countdownEl) {
+            countdownEl.innerHTML = '<div class="countdown-label" style="color:var(--neon-green)">TECHXORA Event Started!</div>';
+          }
+          return;
+        }
+
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        document.getElementById("days").innerText = String(days).padStart(2, '0');
+        document.getElementById("hours").innerText = String(hours).padStart(2, '0');
+        document.getElementById("minutes").innerText = String(minutes).padStart(2, '0');
+        document.getElementById("seconds").innerText = String(seconds).padStart(2, '0');
+      }, 1000);
+    })();
+  </script>
+</body>
+
+</html>

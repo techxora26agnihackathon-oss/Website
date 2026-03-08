@@ -1,0 +1,87 @@
+{% extends "base_public.html" %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div
+    style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;z-index:1">
+    <div style="width:100%;max-width:420px">
+
+        <div style="text-align:center;margin-bottom:32px">
+            <div style="font-size:2rem;margin-bottom:8px"></div>
+            <div
+                style="font-size:1.6rem;font-weight:800;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">
+                TECHXORA 26
+            </div>
+            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:6px">Sign in to continue</div>
+        </div>
+
+        <!-- Role Switcher -->
+        <div
+            style="display:flex;gap:4px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:24px">
+            {% for r, label, icon in [('participant','Participant',''), ('volunteer','Volunteer',''),
+            ('admin','Admin','🛡️')] %}
+            <a href="{{ url_for('auth.login', role=r) }}"
+                style="flex:1;text-align:center;padding:8px 6px;border-radius:7px;font-size:0.78rem;font-weight:600;transition:all 0.2s;text-decoration:none;
+         {% if role == r %}background:var(--bg-card);color:var(--neon-cyan);border:1px solid var(--border-bright){% else %}color:var(--text-muted){% endif %}">
+                {{ icon }} {{ label }}
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for category, msg in messages %}
+            <div class="flash-msg flash-{{ category }}">
+                {% if category == 'success' %}{% elif category == 'error' %}{% else %}ℹ{% endif %} {{ msg }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <div class="card" style="backdrop-filter:blur(12px)">
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('auth.login') }}">
+                    <input type="hidden" name="role" value="{{ role }}" />
+
+                    {% if role == 'participant' %}
+                    <div class="form-group">
+                        <label class="form-label">Your Participant ID</label>
+                        <input type="text" name="participant_id" class="form-control" placeholder="e.g. HF-0001"
+                            autocomplete="off" autocapitalize="characters" required autofocus />
+                        <div style="font-size:0.73rem;color:var(--text-muted);margin-top:6px;margin-bottom:12px;">
+                            Enter the unique ID you received during registration.
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"> Password</label>
+                        <input type="password" name="password" class="form-control"
+                            placeholder="Enter your 4-digit password" required />
+                    </div>
+                    {% else %}
+                    <div class="form-group">
+                        <label class="form-label">
+                            {% if role == 'admin' %} Admin Password{% else %} Volunteer Password{% endif %}
+                        </label>
+                        <input type="password" name="password" class="form-control" placeholder="Enter password"
+                            required autofocus />
+                    </div>
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-primary"
+                        style="width:100%;justify-content:center;margin-top:8px">
+                        Sign In →
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div style="text-align:center;margin-top:20px">
+            <a href="{{ url_for('auth.index') }}" style="color:var(--text-muted);font-size:0.8rem">← Back to Portal
+                Selection</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
